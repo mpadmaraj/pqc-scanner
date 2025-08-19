@@ -8,3 +8,7 @@ terraform
 .replit
 .nix
 replit.nix
+server
+client
+shared
+dist

@@ -1,25 +1,43 @@
 {
   "version": 2,
-  "name": "pqc-vulnerability-scanner",
+  "buildCommand": "npm run build && cp -r dist/public/* . && ls -la",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.ts"
+      "src": "/api/(.*)",
+      "dest": "/api/index.ts"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "buildCommand": "npm run build && cp -r dist/public/* .",
-  "cleanUrls": true,
-  "trailingSlash": false
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).html",
+      "headers": [
+        {
+          "key": "Content-Type", 
+          "value": "text/html; charset=utf-8"
+        }
+      ]
+    }
+  ]
 }
