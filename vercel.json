@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && cp -r dist/public/* . && ls -la",
+  "buildCommand": "vite build --config vite.config.vercel.ts && cp -r dist/public/* . && ls -la",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
