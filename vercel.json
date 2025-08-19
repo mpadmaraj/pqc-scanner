@@ -1,23 +1,19 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && cp -r dist/public/* . && ls -la",
+  "buildCommand": "npm run build && cp -r dist/public/* .",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.ts"
+      "source": "/api/(.*)",
+      "destination": "/api/index.ts"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -27,15 +23,6 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).html",
-      "headers": [
-        {
-          "key": "Content-Type", 
-          "value": "text/html; charset=utf-8"
         }
       ]
     }
