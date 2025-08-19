@@ -1,5 +1,5 @@
 import { 
-  repositories, scans, vulnerabilities, cbomReports, vdrReports, integrations,
+  repositories, scans, vulnerabilities, cbomReports, vdrReports, integrations, users,
   type Repository, type InsertRepository,
   type Scan, type InsertScan,
   type Vulnerability, type InsertVulnerability,
@@ -69,7 +69,7 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(repositories).where(eq(repositories.id, id));
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 
@@ -129,10 +129,7 @@ export class DatabaseStorage implements IStorage {
   async createScan(scan: InsertScan): Promise<Scan> {
     const [created] = await db
       .insert(scans)
-      .values({
-        ...scan,
-        startedAt: new Date(),
-      })
+      .values(scan)
       .returning();
     return created;
   }
