@@ -12,14 +12,15 @@
           "client/dist/**",
           "package.json",
           "drizzle.config.ts"
-        ]
+        ],
+        "maxDuration": 300
       }
     },
     {
-      "src": "client/**",
+      "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "client/dist"
+        "distDir": "dist"
       }
     }
   ],
@@ -35,10 +36,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "server/index.ts": {
-      "maxDuration": 300
-    }
   }
 }
