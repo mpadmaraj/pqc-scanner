@@ -76,8 +76,9 @@ JENKINS_TOKEN=your_jenkins_token
 ### **Vercel (Serverless)**
 - Global edge deployment
 - Automatic HTTPS
-- Requires external database
+- Requires external database (Neon/PlanetScale)
 - Zero server management
+- **FIXED: Proper /api routing for serverless functions**
 
 ## 📊 Current Application Status
 
@@ -87,7 +88,8 @@ JENKINS_TOKEN=your_jenkins_token
 ✅ **Frontend**: React app built and optimized  
 ✅ **Health Check**: `/api/health` endpoint active  
 ✅ **Build Process**: No TypeScript errors  
-✅ **Vercel Ready**: Fixed all Drizzle ORM type issues  
+✅ **Vercel Ready**: Fixed all Drizzle ORM type issues & API routing  
+✅ **Serverless Functions**: Proper /api structure for Vercel deployment  
 
 ## 🚀 Ready to Deploy!
 
