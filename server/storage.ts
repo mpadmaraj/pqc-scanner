@@ -199,23 +199,24 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(vulnerabilities.status, filters.status as any));
     }
     
-    let queryBuilder = db.select().from(vulnerabilities);
+    // Build query step by step to avoid type issues
+    let baseQuery = db.select().from(vulnerabilities);
     
     if (conditions.length > 0) {
-      queryBuilder = queryBuilder.where(and(...conditions));
+      baseQuery = baseQuery.where(and(...conditions)) as any;
     }
     
-    queryBuilder = queryBuilder.orderBy(desc(vulnerabilities.createdAt));
+    baseQuery = baseQuery.orderBy(desc(vulnerabilities.createdAt)) as any;
     
     if (filters.limit) {
-      queryBuilder = queryBuilder.limit(filters.limit);
+      baseQuery = baseQuery.limit(filters.limit) as any;
     }
     
     if (filters.offset) {
-      queryBuilder = queryBuilder.offset(filters.offset);
+      baseQuery = baseQuery.offset(filters.offset) as any;
     }
     
-    return await queryBuilder;
+    return await baseQuery;
   }
 
   async getVulnerabilitiesByScan(scanId: string): Promise<Vulnerability[]> {
