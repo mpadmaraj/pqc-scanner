@@ -94,9 +94,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRepository(repository: InsertRepository): Promise<Repository> {
+    const safeRepository: any = {
+      ...repository,
+      languages: Array.isArray(repository.languages) ? repository.languages : []
+    };
+    
     const [created] = await db
       .insert(repositories)
-      .values(repository)
+      .values([safeRepository])
       .returning();
     return created;
   }
@@ -112,13 +117,18 @@ export class DatabaseStorage implements IStorage {
 
   // Scan operations
   async getScans(repositoryId?: string): Promise<Scan[]> {
-    let query = db.select().from(scans);
-    
     if (repositoryId) {
-      query = query.where(eq(scans.repositoryId, repositoryId));
+      return await db
+        .select()
+        .from(scans)
+        .where(eq(scans.repositoryId, repositoryId))
+        .orderBy(desc(scans.createdAt));
     }
     
-    return await query.orderBy(desc(scans.createdAt));
+    return await db
+      .select()
+      .from(scans)
+      .orderBy(desc(scans.createdAt));
   }
 
   async getScan(id: string): Promise<Scan | undefined> {
@@ -127,9 +137,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createScan(scan: InsertScan): Promise<Scan> {
+    const safeScan: any = {
+      ...scan,
+      scanConfig: scan.scanConfig ? {
+        tools: Array.isArray(scan.scanConfig.tools) ? scan.scanConfig.tools : [],
+        languages: Array.isArray(scan.scanConfig.languages) ? scan.scanConfig.languages : [],
+        customRules: Array.isArray(scan.scanConfig.customRules) ? scan.scanConfig.customRules : undefined
+      } : undefined
+    };
+    
     const [created] = await db
       .insert(scans)
-      .values(scan)
+      .values([safeScan])
       .returning();
     return created;
   }
@@ -162,8 +181,6 @@ export class DatabaseStorage implements IStorage {
     limit?: number;
     offset?: number;
   } = {}): Promise<Vulnerability[]> {
-    let query = db.select().from(vulnerabilities);
-    
     const conditions = [];
     
     if (filters.repositoryId) {
@@ -182,21 +199,23 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(vulnerabilities.status, filters.status as any));
     }
     
+    let queryBuilder = db.select().from(vulnerabilities);
+    
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      queryBuilder = queryBuilder.where(and(...conditions));
     }
     
-    query = query.orderBy(desc(vulnerabilities.createdAt));
+    queryBuilder = queryBuilder.orderBy(desc(vulnerabilities.createdAt));
     
     if (filters.limit) {
-      query = query.limit(filters.limit);
+      queryBuilder = queryBuilder.limit(filters.limit);
     }
     
     if (filters.offset) {
-      query = query.offset(filters.offset);
+      queryBuilder = queryBuilder.offset(filters.offset);
     }
     
-    return await query;
+    return await queryBuilder;
   }
 
   async getVulnerabilitiesByScan(scanId: string): Promise<Vulnerability[]> {
@@ -216,9 +235,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createVulnerability(vulnerability: InsertVulnerability): Promise<Vulnerability> {
+    const safeVulnerability: any = {
+      ...vulnerability,
+      metadata: vulnerability.metadata ? {
+        library: typeof vulnerability.metadata.library === 'string' ? vulnerability.metadata.library : undefined,
+        algorithm: typeof vulnerability.metadata.algorithm === 'string' ? vulnerability.metadata.algorithm : undefined,
+        keySize: typeof vulnerability.metadata.keySize === 'number' ? vulnerability.metadata.keySize : undefined,
+        nistStandard: typeof vulnerability.metadata.nistStandard === 'string' ? vulnerability.metadata.nistStandard : undefined
+      } : undefined
+    };
+    
     const [created] = await db
       .insert(vulnerabilities)
-      .values(vulnerability)
+      .values([safeVulnerability])
       .returning();
     return created;
   }
@@ -253,9 +282,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCbomReport(cbom: InsertCbomReport): Promise<CbomReport> {
+    const safeCbom: any = {
+      ...cbom,
+      cryptoAssets: Array.isArray(cbom.cryptoAssets) ? cbom.cryptoAssets.map((asset: any) => ({
+        name: String(asset.name || ''),
+        algorithm: String(asset.algorithm || ''),
+        keySize: typeof asset.keySize === 'number' ? asset.keySize : undefined,
+        location: String(asset.location || ''),
+        nistCompliance: typeof asset.nistCompliance === 'boolean' ? asset.nistCompliance : undefined
+      })) : []
+    };
+    
     const [created] = await db
       .insert(cbomReports)
-      .values(cbom)
+      .values([safeCbom])
       .returning();
     return created;
   }
@@ -274,7 +314,7 @@ export class DatabaseStorage implements IStorage {
   async createVdrReport(vdr: InsertVdrReport): Promise<VdrReport> {
     const [created] = await db
       .insert(vdrReports)
-      .values(vdr)
+      .values([vdr])
       .returning();
     return created;
   }
@@ -296,9 +336,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createIntegration(integration: InsertIntegration): Promise<Integration> {
+    const safeIntegration: any = {
+      ...integration,
+      config: {
+        enabled: Boolean(integration.config.enabled),
+        apiKey: typeof integration.config.apiKey === 'string' ? integration.config.apiKey : undefined,
+        webhookUrl: typeof integration.config.webhookUrl === 'string' ? integration.config.webhookUrl : undefined
+      }
+    };
+    
     const [created] = await db
       .insert(integrations)
-      .values(integration)
+      .values([safeIntegration])
       .returning();
     return created;
   }
