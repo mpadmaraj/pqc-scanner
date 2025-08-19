@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && cp -r dist/public/* .",
+  "buildCommand": "npm run build && cp -r dist/public/* . && ls -la",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
