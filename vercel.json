@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "name": "pqc-vulnerability-scanner",
+  "builds": [
+    {
+      "src": "server/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "server/**",
+          "shared/**",
+          "client/dist/**",
+          "package.json",
+          "drizzle.config.ts"
+        ]
+      }
+    },
+    {
+      "src": "client/**",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "client/dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server/index.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/dist/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "server/index.ts": {
+      "maxDuration": 300
+    }
+  }
+}

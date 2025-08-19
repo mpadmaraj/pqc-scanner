@@ -1,0 +1,24 @@
+{
+  "scripts": {
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "tsc --project server/tsconfig.json",
+    "start": "node dist/server/index.js",
+    "dev": "NODE_ENV=development tsx server/index.ts",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:migrate": "drizzle-kit migrate",
+    "db:generate": "drizzle-kit generate",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "type-check": "tsc --noEmit",
+    "docker:build": "docker build -t pqc-scanner .",
+    "docker:run": "docker run -p 5000:5000 pqc-scanner",
+    "deploy:docker": "./deploy.sh docker",
+    "deploy:aws": "./deploy.sh aws",
+    "deploy:vercel": "./deploy.sh vercel",
+    "setup:local": "./deploy.sh local"
+  }
+}

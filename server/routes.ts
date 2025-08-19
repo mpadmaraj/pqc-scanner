@@ -238,6 +238,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Health check endpoint for deployment
+  app.get("/api/health", async (req, res) => {
+    try {
+      // Check database connectivity
+      await storage.getDashboardStats();
+      res.json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        database: "connected",
+        version: "1.0.0"
+      });
+    } catch (error) {
+      res.status(503).json({ 
+        status: "unhealthy", 
+        timestamp: new Date().toISOString(),
+        database: "disconnected",
+        error: "Database connection failed"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
