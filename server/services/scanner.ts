@@ -142,6 +142,8 @@ class ScannerService {
 
           results.results?.forEach((finding: any) => {
             vulnerabilities.push({
+              repositoryId: "", // Will be set by caller
+              scanId: "", // Will be set by caller
               title: finding.extra?.message || "Cryptographic vulnerability",
               description: finding.extra?.message || "",
               severity: this.mapSeverity(finding.extra?.severity || "medium"),
@@ -164,7 +166,7 @@ class ScannerService {
                 name: finding.extra.metadata.algorithm,
                 algorithm: finding.extra.metadata.algorithm,
                 location: `${finding.path}:${finding.start?.line}`,
-                nistCompliance: this.checkNistCompliance(finding.extra.metadata.algorithm)
+                nistCompliance: this.checkNistComplianceAlgorithm(finding.extra.metadata.algorithm)
               });
             }
           });
@@ -196,6 +198,8 @@ class ScannerService {
           results.results?.forEach((finding: any) => {
             if (finding.test_name?.includes("crypto") || finding.issue_text?.toLowerCase().includes("crypt")) {
               vulnerabilities.push({
+                repositoryId: "", // Will be set by caller
+                scanId: "", // Will be set by caller
                 title: finding.test_name || "Python cryptographic issue",
                 description: finding.issue_text,
                 severity: this.mapBanditSeverity(finding.issue_severity),
@@ -252,6 +256,8 @@ class ScannerService {
           if (match) {
             if (pattern.vulnerable) {
               vulnerabilities.push({
+                repositoryId: "", // Will be set by caller
+                scanId: "", // Will be set by caller
                 title: `${pattern.algorithm} Quantum Vulnerability`,
                 description: `Usage of quantum-vulnerable ${pattern.algorithm} algorithm detected`,
                 severity: pattern.algorithm === "RSA" ? "critical" : "high",
@@ -389,7 +395,7 @@ class ScannerService {
     return recommendations[algorithm] || "Evaluate quantum-safety and migrate to NIST-approved post-quantum algorithms";
   }
 
-  private checkNistCompliance(algorithm: string): boolean {
+  private checkNistComplianceAlgorithm(algorithm: string): boolean {
     const nistApproved = ["ML-KEM", "CRYSTALS-KYBER", "ML-DSA", "CRYSTALS-Dilithium", "SLH-DSA", "SPHINCS+"];
     return nistApproved.some(approved => algorithm.includes(approved));
   }
