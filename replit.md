@@ -32,6 +32,15 @@ Preferred communication style: Simple, everyday language.
 - **Database Security**: Environment-based database connection strings with SSL support
 - **Input Validation**: Zod schema validation for API endpoints and form submissions
 
+# Recent Changes
+
+## Vercel Deployment Fix (August 2024)
+- **Issue**: Vercel build failing with "Could not resolve entry module client/index.html" error
+- **Solution**: Created custom Node.js build script (`build-for-vercel.js`) to handle complex path resolution
+- **Result**: Successful build with files properly placed in `/public` directory for Vercel static serving
+- **Build Process**: Uses existing Vite configuration, then copies output to correct Vercel structure
+- **Status**: Ready for production deployment via `vercel --prod`
+
 # External Dependencies
 
 ## Database Services

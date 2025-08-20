@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "vite build --config vite.config.vercel.ts && cp -r dist/public/* . && ls -la",
+  "buildCommand": "node build-for-vercel.js",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
@@ -13,7 +13,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/public/index.html"
     }
   ],
   "headers": [
