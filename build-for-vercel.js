@@ -31,30 +31,101 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": resolve(process.cwd(), "client/src"),
-      "@shared": resolve(process.cwd(), "shared"),
-      "@assets": resolve(process.cwd(), "attached_assets"),
+      "@": resolve("./src"),
+      "@shared": resolve("../shared"),
+      "@assets": resolve("../attached_assets"),
     },
   },
-  root: resolve(process.cwd(), "client"),
   build: {
-    outDir: resolve(process.cwd(), "vercel-build"),
+    outDir: resolve("../vercel-build"),
     emptyOutDir: true,
   },
 });
 `;
 
-writeFileSync('vite.config.vercel-deploy.js', vercelViteConfig);
+// Write the Vite config to client directory
+writeFileSync('client/vite.config.vercel.js', vercelViteConfig);
 
-// Temporarily rename the original config to avoid conflicts
-if (existsSync('vite.config.ts')) {
-  console.log('Temporarily moving original vite.config.ts...');
-  execSync('mv vite.config.ts vite.config.ts.backup');
+// Copy Tailwind configuration for the build
+const tailwindConfig = `
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      colors: {
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        card: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
+        },
+        popover: {
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
+        },
+        primary: {
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
+        },
+        secondary: {
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
+        },
+        muted: {
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
+        },
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
+        },
+        destructive: {
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        chart: {
+          "1": "var(--chart-1)",
+          "2": "var(--chart-2)",
+          "3": "var(--chart-3)",
+          "4": "var(--chart-4)",
+          "5": "var(--chart-5)",
+        },
+      },
+    },
+  },
+  plugins: [],
 }
+`;
 
-// Run the build command with isolated config
-console.log('Running vite build with isolated config...');
-execSync('vite build --config vite.config.vercel-deploy.js', { stdio: 'inherit' });
+const postcssConfig = `
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+`;
+
+writeFileSync('client/tailwind.config.js', tailwindConfig);
+writeFileSync('client/postcss.config.js', postcssConfig);
+
+// Change to client directory and run build
+console.log('Running vite build from client directory...');
+process.chdir('client');
+execSync('vite build --config vite.config.vercel.js', { stdio: 'inherit' });
+process.chdir('..');
 
 // Copy files to public directory
 console.log('Copying files to public directory...');
@@ -67,9 +138,6 @@ console.log('Build completed successfully!');
 console.log('Files in public directory:');
 execSync('ls -la public/', { stdio: 'inherit' });
 
-// Restore the original config and clean up
-if (existsSync('vite.config.ts.backup')) {
-  execSync('mv vite.config.ts.backup vite.config.ts');
-}
-execSync('rm -f vite.config.vercel-deploy.js');
+// Clean up temporary files
+execSync('rm -f client/vite.config.vercel.js client/tailwind.config.js client/postcss.config.js');
 execSync('rm -rf vercel-build');
