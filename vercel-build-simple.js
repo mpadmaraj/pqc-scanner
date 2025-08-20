@@ -49,32 +49,17 @@ try {
   // Build using the main configuration
   execSync('npm run build', { stdio: 'inherit' });
   
-  // Copy from wherever the build output went to public
-  console.log('Looking for build output...');
+  // For Vercel, we don't need to copy to public - dist/public is automatically served
+  console.log('✅ Build completed successfully!');
+  
+  // Verify build output
   if (existsSync('dist/public')) {
-    console.log('Found dist/public, copying to public...');
-    if (!existsSync('public')) {
-      mkdirSync('public', { recursive: true });
-    }
-    copyRecursiveSync('dist/public', 'public');
-  } else if (existsSync('client/dist')) {
-    console.log('Found client/dist, copying to public...');
-    if (!existsSync('public')) {
-      mkdirSync('public', { recursive: true });
-    }
-    copyRecursiveSync('client/dist', 'public');
-  } else {
-    console.log('Checking other possible build locations...');
-    console.log('Current directory contents:', readdirSync('.'));
-    if (existsSync('client')) {
-      console.log('Client directory contents:', readdirSync('client'));
-    }
+    console.log('Frontend built to dist/public:');
+    execSync('ls -la dist/public/', { stdio: 'inherit' });
   }
   
-  console.log('✅ Build completed successfully!');
-  if (existsSync('public')) {
-    console.log('Files in public directory:');
-    execSync('ls -la public/', { stdio: 'inherit' });
+  if (existsSync('dist/index.js')) {
+    console.log('✅ API serverless function ready at dist/index.js');
   }
   
 } catch (error) {

@@ -41,7 +41,7 @@ Preferred communication style: Simple, everyday language.
 - **Build Process**: Uses standard npm build command with VERCEL=1 environment variable for proper configuration
 - **Status**: Ready for production deployment via `vercel --prod`
 - **Critical Fix**: Removed client, server, shared from .vercelignore to ensure source files are available during build
-- **Routing Fix**: Corrected vercel.json rewrites to serve /index.html for SPA routing instead of /public/index.html
+- **Simplified Setup**: Minimal vercel.json using outputDirectory and simple SPA routing fallback
 
 # External Dependencies
 
