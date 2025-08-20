@@ -40,6 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Result**: Successful build with files properly placed in `/public` directory for Vercel static serving  
 - **Build Process**: Uses standard npm build command with VERCEL=1 environment variable for proper configuration
 - **Status**: Ready for production deployment via `vercel --prod`
+- **Critical Fix**: Removed client, server, shared from .vercelignore to ensure source files are available during build
 
 # External Dependencies
 

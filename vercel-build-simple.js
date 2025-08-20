@@ -24,6 +24,21 @@ function copyRecursiveSync(src, dest) {
 console.log('🚀 Building PQC Scanner for Vercel...');
 console.log('Working directory:', process.cwd());
 console.log('Available directories:', readdirSync('.').filter(f => !f.startsWith('.') && statSync(f).isDirectory()));
+console.log('Available files:', readdirSync('.').filter(f => !f.startsWith('.') && !statSync(f).isDirectory()));
+
+// Check if we have the necessary directories for building
+if (!existsSync('client') || !existsSync('server') || !existsSync('shared')) {
+  console.log('❌ Missing required directories (client, server, shared)');
+  console.log('This suggests the Vercel deployment is not including all source files.');
+  console.log('Checking .vercelignore file...');
+  
+  if (existsSync('.vercelignore')) {
+    console.log('Contents of .vercelignore:', require('fs').readFileSync('.vercelignore', 'utf8'));
+  }
+  
+  console.log('❌ Cannot build without source directories. Please check Vercel deployment configuration.');
+  process.exit(1);
+}
 
 try {
   // Simple approach: Use the main vite command but with environment variable
