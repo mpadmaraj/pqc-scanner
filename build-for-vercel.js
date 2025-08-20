@@ -31,24 +31,30 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": resolve("./client/src"),
-      "@shared": resolve("./shared"),
-      "@assets": resolve("./attached_assets"),
+      "@": resolve(process.cwd(), "client/src"),
+      "@shared": resolve(process.cwd(), "shared"),
+      "@assets": resolve(process.cwd(), "attached_assets"),
     },
   },
-  root: "./client",
+  root: resolve(process.cwd(), "client"),
   build: {
-    outDir: "../vercel-build",
+    outDir: resolve(process.cwd(), "vercel-build"),
     emptyOutDir: true,
   },
 });
 `;
 
-writeFileSync('vite.config.temp.js', vercelViteConfig);
+writeFileSync('vite.config.vercel-deploy.js', vercelViteConfig);
 
-// Run the build command with temporary config
+// Temporarily rename the original config to avoid conflicts
+if (existsSync('vite.config.ts')) {
+  console.log('Temporarily moving original vite.config.ts...');
+  execSync('mv vite.config.ts vite.config.ts.backup');
+}
+
+// Run the build command with isolated config
 console.log('Running vite build with isolated config...');
-execSync('vite build --config vite.config.temp.js', { stdio: 'inherit' });
+execSync('vite build --config vite.config.vercel-deploy.js', { stdio: 'inherit' });
 
 // Copy files to public directory
 console.log('Copying files to public directory...');
@@ -61,6 +67,9 @@ console.log('Build completed successfully!');
 console.log('Files in public directory:');
 execSync('ls -la public/', { stdio: 'inherit' });
 
-// Clean up temporary files
-execSync('rm -f vite.config.temp.js');
+// Restore the original config and clean up
+if (existsSync('vite.config.ts.backup')) {
+  execSync('mv vite.config.ts.backup vite.config.ts');
+}
+execSync('rm -f vite.config.vercel-deploy.js');
 execSync('rm -rf vercel-build');
