@@ -32,11 +32,49 @@ function setupRoutes(app: Express) {
 
   app.post("/api/repositories", async (req, res) => {
     try {
-      const data = insertRepositorySchema.parse(req.body);
+      console.log('Repository creation request body:', req.body);
+      
+      // Validate required fields first
+      if (!req.body.name || !req.body.url) {
+        return res.status(400).json({ 
+          error: "Name and URL are required fields" 
+        });
+      }
+      
+      // Add default provider if not provided
+      const requestData = {
+        name: req.body.name,
+        url: req.body.url,
+        provider: req.body.provider || 'github',
+        description: req.body.description || null,
+        languages: req.body.languages || [],
+      };
+      
+      console.log('Processed request data:', requestData);
+      const data = insertRepositorySchema.parse(requestData);
+      console.log('Schema validation passed, creating repository...');
+      
       const repository = await storage.createRepository(data);
+      console.log('Repository created successfully:', repository.id);
+      
       res.json(repository);
     } catch (error) {
-      res.status(400).json({ error: "Invalid repository data" });
+      console.error('Repository creation error:', error);
+      
+      // Check if it's a database connection error
+      if (error && typeof error === 'object' && 'code' in error) {
+        if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+          return res.status(503).json({ 
+            error: "Database connection failed. Please check DATABASE_URL environment variable." 
+          });
+        }
+      }
+      
+      if (error instanceof Error) {
+        res.status(400).json({ error: `Repository creation failed: ${error.message}` });
+      } else {
+        res.status(500).json({ error: "Internal server error" });
+      }
     }
   });
 
