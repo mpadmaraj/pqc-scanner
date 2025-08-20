@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "node build-for-vercel.js",
+  "buildCommand": "node vercel-build-simple.js",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30

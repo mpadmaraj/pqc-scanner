@@ -36,9 +36,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Vercel Deployment Fix (August 2024)
 - **Issue**: Vercel build failing with "Could not resolve entry module client/index.html" error
-- **Solution**: Created custom build script (`build-for-vercel.js`) that temporarily isolates problematic Vite configuration during build
-- **Result**: Successful build with files properly placed in `/public` directory for Vercel static serving
-- **Build Process**: Creates isolated Vite configuration in client directory with required Tailwind and PostCSS configs
+- **Solution**: Created simplified build script (`vercel-build-simple.js`) that uses existing npm build script with Vercel environment variables
+- **Result**: Successful build with files properly placed in `/public` directory for Vercel static serving  
+- **Build Process**: Uses standard npm build command with VERCEL=1 environment variable for proper configuration
 - **Status**: Ready for production deployment via `vercel --prod`
 
 # External Dependencies
