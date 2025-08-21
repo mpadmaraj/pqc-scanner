@@ -76,17 +76,29 @@ class ScannerService {
 
   private async cloneRepository(url: string, targetPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      // Add error handling for common git clone issues
       const git = spawn("git", ["clone", "--depth", "1", url, targetPath]);
+      
+      let errorOutput = "";
+      
+      git.stderr?.on("data", (data) => {
+        errorOutput += data.toString();
+      });
       
       git.on("close", (code) => {
         if (code === 0) {
           resolve();
         } else {
-          reject(new Error(`Git clone failed with code ${code}`));
+          const errorMessage = errorOutput || `Git clone failed with code ${code}`;
+          console.error(`Git clone error for ${url}: ${errorMessage}`);
+          reject(new Error(`Git clone failed: ${errorMessage}. This may be due to authentication issues, invalid URL, or the repository being private.`));
         }
       });
       
-      git.on("error", reject);
+      git.on("error", (err) => {
+        console.error(`Git spawn error: ${err.message}`);
+        reject(new Error(`Git command failed: ${err.message}. Make sure git is installed and accessible.`));
+      });
     });
   }
 
