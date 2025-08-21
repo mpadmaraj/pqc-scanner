@@ -1,15 +1,25 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import express, { type Express } from 'express';
-import { storage } from '../server/storage';
-import { scannerService } from '../server/services/scanner';
-import { cbomService } from '../server/services/cbom';
-import { vdrService } from '../server/services/vdr';
-import { integrationsService } from '../server/services/integrations';
 import { insertRepositorySchema, insertScanSchema, insertVulnerabilitySchema, insertIntegrationSchema } from '../shared/schema';
 
 let app: Express | null = null;
 
-function setupRoutes(app: Express) {
+function setupRoutes(app: Express, services?: {
+  storage: any;
+  scannerService: any;
+  cbomService: any;
+  vdrService: any;
+  integrationsService: any;
+}) {
+  
+  if (!services) {
+    app.use('/api/*', (req, res) => {
+      res.status(503).json({ error: 'Services not initialized' });
+    });
+    return;
+  }
+  
+  const { storage, scannerService, cbomService, vdrService, integrationsService } = services;
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({
@@ -139,7 +149,22 @@ async function getApp() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
     
-    setupRoutes(app);
+    // Initialize storage and services lazily in Vercel environment
+    try {
+      const { storage } = await import('../server/storage');
+      const { scannerService } = await import('../server/services/scanner');
+      const { cbomService } = await import('../server/services/cbom');
+      const { vdrService } = await import('../server/services/vdr');
+      const { integrationsService } = await import('../server/services/integrations');
+      
+      setupRoutes(app, { storage, scannerService, cbomService, vdrService, integrationsService });
+    } catch (error) {
+      console.error('Failed to initialize services:', error);
+      // Setup basic error routes
+      app.use('/api/*', (req, res) => {
+        res.status(503).json({ error: 'Service initialization failed', details: error.message });
+      });
+    }
   }
   return app;
 }
