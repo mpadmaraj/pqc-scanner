@@ -108,7 +108,7 @@ export default function ScanHistory() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-medium text-foreground" data-testid="text-page-title">
-              Scan History
+              Q-Scan History
             </h2>
             <p className="text-sm text-muted-foreground">
               View and manage all vulnerability scan results

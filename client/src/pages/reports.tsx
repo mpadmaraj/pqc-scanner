@@ -109,7 +109,7 @@ export default function Reports() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-medium text-foreground" data-testid="text-page-title">
-              Reports & Analytics
+              Q-Scan Reports
             </h2>
             <p className="text-sm text-muted-foreground">
               Generate comprehensive vulnerability and compliance reports

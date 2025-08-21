@@ -140,7 +140,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-medium text-foreground" data-testid="text-page-title">
-              PQC Vulnerability Dashboard
+              Q-Scan Dashboard
             </h2>
             <p className="text-sm text-muted-foreground">
               Monitor post-quantum cryptography vulnerabilities across your repositories

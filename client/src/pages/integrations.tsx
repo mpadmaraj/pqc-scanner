@@ -185,10 +185,10 @@ export default function Integrations() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-medium text-foreground" data-testid="text-page-title">
-              Integrations
+              Q-Scan Integrations
             </h2>
             <p className="text-sm text-muted-foreground">
-              Connect PQC Scanner with your development tools and CI/CD pipelines
+              Connect Q-Scan with your development tools and CI/CD pipelines
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

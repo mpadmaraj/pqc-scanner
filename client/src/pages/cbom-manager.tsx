@@ -84,7 +84,7 @@ export default function CbomManager() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-medium text-foreground" data-testid="text-page-title">
-              CBOM Manager
+              Q-Scan CBOM
             </h2>
             <p className="text-sm text-muted-foreground">
               Manage Cryptography Bills of Materials and analyze crypto asset compliance

@@ -69,8 +69,8 @@ export default function Layout({ children }: LayoutProps) {
 
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <img src="/logo.png" alt="PQC Scanner" className="h-8 w-8" />
-              <h1 className="text-2xl font-medium text-foreground">PQC Scanner</h1>
+              <img src="/logo.png" alt="Q-Scan" className="h-8 w-8" />
+              <h1 className="text-2xl font-medium text-foreground">Q-Scan</h1>
               <span className="rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
                 BETA
               </span>

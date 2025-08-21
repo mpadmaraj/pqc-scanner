@@ -22,6 +22,8 @@ export default function ScanRepository() {
   const [selectedTools, setSelectedTools] = useState<string[]>(["semgrep", "bandit"]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [customRules, setCustomRules] = useState("");
+  const [isValidatingRepo, setIsValidatingRepo] = useState(false);
+  const [repoValidationStatus, setRepoValidationStatus] = useState<string | null>(null);
   const [isNewScanDialogOpen, setIsNewScanDialogOpen] = useState(false);
   const [selectedRepoForScan, setSelectedRepoForScan] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -132,6 +134,13 @@ export default function ScanRepository() {
       description,
       languages: selectedLanguages,
     });
+    
+    // Clear form after successful submission
+    setRepoName("");
+    setRepoUrl("");
+    setDescription("");
+    setSelectedLanguages([]);
+    setRepoValidationStatus(null);
   };
 
   const handleDeleteRepository = async (repositoryId: string) => {
@@ -169,6 +178,72 @@ export default function ScanRepository() {
     }
   };
 
+  const validateAndFetchRepoMetadata = async (url: string) => {
+    if (!url || !url.includes('github.com') && !url.includes('gitlab.com') && !url.includes('bitbucket.org')) {
+      setRepoValidationStatus(null);
+      return;
+    }
+
+    setIsValidatingRepo(true);
+    setRepoValidationStatus("Checking repository...");
+
+    try {
+      // Extract repository information from URL
+      const urlMatch = url.match(/(?:github\.com|gitlab\.com|bitbucket\.org)\/([^\/]+)\/([^\/]+)/);
+      if (!urlMatch) {
+        setRepoValidationStatus("Invalid repository URL format");
+        setIsValidatingRepo(false);
+        return;
+      }
+
+      const [, owner, repoName] = urlMatch;
+      const cleanRepoName = repoName.replace(/\.git$/, '');
+
+      // For GitHub repositories, try to fetch metadata
+      if (url.includes('github.com')) {
+        try {
+          const response = await fetch(`https://api.github.com/repos/${owner}/${cleanRepoName}`);
+          if (response.ok) {
+            const repoData = await response.json();
+            
+            // Auto-populate fields with fetched data
+            if (!description || description === "") {
+              setDescription(repoData.description || "");
+            }
+            
+            // Try to fetch languages
+            const languagesResponse = await fetch(`https://api.github.com/repos/${owner}/${cleanRepoName}/languages`);
+            if (languagesResponse.ok) {
+              const languagesData = await languagesResponse.json();
+              const detectedLanguages = Object.keys(languagesData)
+                .map(lang => lang.toLowerCase())
+                .filter(lang => availableLanguages.includes(lang));
+              
+              if (detectedLanguages.length > 0) {
+                setSelectedLanguages(detectedLanguages);
+              }
+            }
+
+            setRepoValidationStatus("✓ Repository found and accessible");
+          } else if (response.status === 404) {
+            setRepoValidationStatus("❌ Repository not found or not accessible");
+          } else {
+            setRepoValidationStatus("❌ Unable to access repository");
+          }
+        } catch (error) {
+          setRepoValidationStatus("❌ Error validating repository");
+        }
+      } else {
+        // For other providers, just validate URL format
+        setRepoValidationStatus("✓ Repository URL format is valid");
+      }
+    } catch (error) {
+      setRepoValidationStatus("❌ Error validating repository");
+    } finally {
+      setIsValidatingRepo(false);
+    }
+  };
+
   const handleEditRepository = (repo: any) => {
     setEditingRepo(repo);
     setRepoName(repo.name);
@@ -179,6 +254,7 @@ export default function ScanRepository() {
     // Reset scan configuration to allow selecting additional tools
     setSelectedTools(["semgrep", "bandit"]);
     setCustomRules("");
+    setRepoValidationStatus(null);
     setIsEditDialogOpen(true);
   };
 
@@ -294,7 +370,7 @@ export default function ScanRepository() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-medium text-foreground" data-testid="text-page-title">
-              Scan Repository
+              Q-Scan Repository
             </h2>
             <p className="text-sm text-muted-foreground">
               Add repositories and configure PQC vulnerability scanning
@@ -357,13 +433,35 @@ export default function ScanRepository() {
 
               <div className="space-y-2">
                 <Label htmlFor="repo-url">Repository URL</Label>
-                <Input
-                  id="repo-url"
-                  value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.target.value)}
-                  placeholder="https://github.com/username/repository"
-                  data-testid="input-repo-url"
-                />
+                <div className="space-y-2">
+                  <Input
+                    id="repo-url"
+                    value={repoUrl}
+                    onChange={(e) => {
+                      setRepoUrl(e.target.value);
+                      // Clear previous validation status
+                      setRepoValidationStatus(null);
+                      // Debounce validation to avoid too many API calls
+                      setTimeout(() => validateAndFetchRepoMetadata(e.target.value), 1000);
+                    }}
+                    placeholder="https://github.com/username/repository"
+                    data-testid="input-repo-url"
+                  />
+                  {(isValidatingRepo || repoValidationStatus) && (
+                    <div className="flex items-center space-x-2 text-xs">
+                      {isValidatingRepo && (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                      )}
+                      <span className={
+                        repoValidationStatus?.includes('✓') ? 'text-green-600' :
+                        repoValidationStatus?.includes('❌') ? 'text-red-600' :
+                        'text-muted-foreground'
+                      }>
+                        {repoValidationStatus}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -713,8 +811,8 @@ export default function ScanRepository() {
 
             <div className="space-y-2">
               <Label htmlFor="edit-provider">Provider</Label>
-              <Select value={provider} onValueChange={(value: any) => setProvider(value)}>
-                <SelectTrigger>
+              <Select value={provider} onValueChange={(value: any) => setProvider(value)} disabled>
+                <SelectTrigger className="opacity-60">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -724,6 +822,7 @@ export default function ScanRepository() {
                   <SelectItem value="local">Local Repository</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">Provider cannot be changed after repository creation</p>
             </div>
 
             <div className="space-y-2">
@@ -755,6 +854,46 @@ export default function ScanRepository() {
               <p className="text-xs text-muted-foreground mt-2">
                 Languages are auto-detected from your repository. You can modify the selection above.
               </p>
+            </div>
+
+            {/* Scanning Tools */}
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Scanning Tools</Label>
+              <div className="space-y-3">
+                {availableTools.map((tool) => (
+                  <div key={tool.id} className="flex items-start space-x-3">
+                    <Checkbox
+                      id={`edit-${tool.id}`}
+                      checked={selectedTools.includes(tool.id)}
+                      onCheckedChange={() => handleToolToggle(tool.id)}
+                      data-testid={`checkbox-edit-${tool.id}`}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor={`edit-${tool.id}`} className="text-sm font-medium">
+                        {tool.name}
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {tool.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Rules */}
+            <div>
+              <Label htmlFor="edit-custom-rules" className="text-sm font-medium">
+                Custom Rules (Optional)
+              </Label>
+              <Textarea
+                id="edit-custom-rules"
+                value={customRules}
+                onChange={(e) => setCustomRules(e.target.value)}
+                placeholder="One rule per line..."
+                className="mt-2 text-xs font-mono"
+                rows={3}
+              />
             </div>
           </div>
 
