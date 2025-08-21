@@ -44,9 +44,7 @@ const insertScanSchema = createInsertSchema(scans).omit({
 });
 
 // Configure for Vercel edge runtime
-if (typeof window === 'undefined') {
-  neonConfig.webSocketConstructor = require('ws');
-}
+neonConfig.webSocketConstructor = globalThis.WebSocket;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Add CORS headers
