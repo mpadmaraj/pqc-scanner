@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 import { pgTable, text, varchar, timestamp, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
@@ -33,8 +33,8 @@ neonConfig.webSocketConstructor = globalThis.WebSocket;
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Add CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -83,6 +83,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       console.log('Repository created successfully:', repository.id);
       return res.json(repository);
+    }
+
+    // Handle individual repository operations
+    const url = new URL(req.url || '', `http://${req.headers.host}`);
+    const pathParts = url.pathname.split('/');
+    const repositoryId = pathParts[pathParts.length - 1];
+    
+    if (req.method === 'PATCH' && repositoryId && repositoryId !== 'repositories') {
+      const updateSchema = insertRepositorySchema.partial();
+      const validatedData = updateSchema.parse(req.body);
+      
+      const updateData: any = {
+        ...validatedData,
+        updatedAt: new Date()
+      };
+      
+      // Ensure languages is properly formatted as array
+      if (updateData.languages && !Array.isArray(updateData.languages)) {
+        updateData.languages = [];
+      }
+      
+      const [updatedRepository] = await db
+        .update(repositories)
+        .set(updateData)
+        .where(eq(repositories.id, repositoryId))
+        .returning();
+      
+      if (!updatedRepository) {
+        return res.status(404).json({ error: 'Repository not found' });
+      }
+      
+      return res.json(updatedRepository);
+    }
+
+    if (req.method === 'DELETE' && repositoryId && repositoryId !== 'repositories') {
+      const [deletedRepository] = await db
+        .delete(repositories)
+        .where(eq(repositories.id, repositoryId))
+        .returning();
+      
+      if (!deletedRepository) {
+        return res.status(404).json({ error: 'Repository not found' });
+      }
+      
+      return res.json({ message: 'Repository deleted successfully' });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

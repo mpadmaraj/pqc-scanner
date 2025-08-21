@@ -32,26 +32,63 @@ export default function Reports() {
     }
   });
 
+  // Calculate actual data based on vulnerabilities
+  const vulnerabilitysByType = vulnerabilities?.reduce((acc: any, vuln: any) => {
+    const severity = vuln.severity || 'medium';
+    acc[severity] = (acc[severity] || 0) + 1;
+    return acc;
+  }, {}) || {};
+
+  const totalVulnerabilities = vulnerabilities?.length || 0;
+  const criticalCount = vulnerabilitysByType.critical || 0;
+  const highCount = vulnerabilitysByType.high || 0;
+  const mediumCount = vulnerabilitysByType.medium || 0;
+  const lowCount = vulnerabilitysByType.low || 0;
+
+  // Use real stats or fallback to 0
+  const realStats = {
+    totalRepositories: stats?.totalRepositories || repositories?.length || 0,
+    totalScans: stats?.totalScans || 0,
+    totalVulnerabilities: stats?.totalVulnerabilities || totalVulnerabilities,
+    criticalVulnerabilities: stats?.criticalVulnerabilities || criticalCount,
+    highVulnerabilities: stats?.highVulnerabilities || highCount,
+    mediumVulnerabilities: stats?.mediumVulnerabilities || mediumCount,
+    lowVulnerabilities: stats?.lowVulnerabilities || lowCount,
+  };
+
   const vulnerabilityTrends = [
-    { month: "Jan", critical: 12, high: 23, medium: 45, low: 12 },
-    { month: "Feb", critical: 15, high: 28, medium: 38, low: 15 },
-    { month: "Mar", critical: 8, high: 32, medium: 42, low: 18 },
-    { month: "Apr", critical: 23, high: 26, medium: 48, low: 14 },
-    { month: "May", critical: 18, high: 24, medium: 52, low: 16 },
-    { month: "Jun", critical: 23, high: 35, medium: 47, low: 19 },
+    { 
+      month: "Current", 
+      critical: realStats.criticalVulnerabilities, 
+      high: realStats.highVulnerabilities, 
+      medium: realStats.mediumVulnerabilities, 
+      low: realStats.lowVulnerabilities 
+    },
   ];
 
   const complianceData = [
-    { standard: "FIPS 203 (ML-KEM)", compliance: 85, status: "partial" },
-    { standard: "FIPS 204 (ML-DSA)", compliance: 92, status: "compliant" },
-    { standard: "FIPS 205 (SLH-DSA)", compliance: 45, status: "missing" },
+    { 
+      standard: "FIPS 203 (ML-KEM)", 
+      compliance: criticalCount === 0 ? 100 : Math.max(0, 100 - (criticalCount * 10)), 
+      status: criticalCount === 0 ? "compliant" : criticalCount < 3 ? "partial" : "missing" 
+    },
+    { 
+      standard: "FIPS 204 (ML-DSA)", 
+      compliance: highCount === 0 ? 100 : Math.max(0, 100 - (highCount * 5)), 
+      status: highCount === 0 ? "compliant" : highCount < 5 ? "partial" : "missing" 
+    },
+    { 
+      standard: "FIPS 205 (SLH-DSA)", 
+      compliance: mediumCount === 0 ? 100 : Math.max(0, 100 - (mediumCount * 2)), 
+      status: mediumCount === 0 ? "compliant" : mediumCount < 10 ? "partial" : "missing" 
+    },
   ];
 
   const riskScores = {
-    overall: 73,
-    cryptographic: 68,
-    quantumReadiness: 82,
-    compliance: 74
+    overall: Math.max(0, 100 - (criticalCount * 15 + highCount * 10 + mediumCount * 5 + lowCount * 2)),
+    cryptographic: Math.max(0, 100 - (criticalCount * 20 + highCount * 10)),
+    quantumReadiness: Math.max(0, 100 - (criticalCount * 25 + highCount * 15)),
+    compliance: complianceData.reduce((avg, item) => avg + item.compliance, 0) / complianceData.length
   };
 
   const handleGenerateReport = (format: string) => {

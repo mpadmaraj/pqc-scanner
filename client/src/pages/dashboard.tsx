@@ -48,7 +48,7 @@ export default function Dashboard() {
               <Download className="mr-2 h-4 w-4" />
               Export Report
             </Button>
-            <Button data-testid="button-new-scan">
+            <Button onClick={() => window.location.href = '/scan-repository'} data-testid="button-new-scan">
               <Plus className="mr-2 h-4 w-4" />
               New Scan
             </Button>

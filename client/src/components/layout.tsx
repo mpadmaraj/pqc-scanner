@@ -12,11 +12,7 @@ import {
   History, 
   FileText, 
   Plug, 
-  Database,
-  Github,
-  Cog,
-  Code,
-  Key
+  Database
 } from "lucide-react";
 
 interface LayoutProps {
@@ -36,12 +32,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "CBOM Manager", href: "/cbom-manager", icon: Database },
   ];
 
-  const apiPlugins = [
-    { name: "GitHub Actions", href: "/integrations#github", icon: Github },
-    { name: "Jenkins", href: "/integrations#jenkins", icon: Cog },
-    { name: "SonarQube", href: "/integrations#sonarqube", icon: Code },
-    { name: "API Keys", href: "/integrations#api-keys", icon: Key },
-  ];
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,25 +111,7 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
             ))}
 
-            <div className="pt-8">
-              <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                API & Plugins
-              </h3>
-              <div className="space-y-1">
-                {apiPlugins.map((item) => (
-                  <Link key={item.name} href={item.href}>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      data-testid={`link-${item.name.toLowerCase().replace(" ", "-")}`}
-                    >
-                      <item.icon className="mr-3 h-4 w-4" />
-                      {item.name}
-                    </Button>
-                  </Link>
-                ))}
-              </div>
-            </div>
+
           </nav>
         </aside>
 

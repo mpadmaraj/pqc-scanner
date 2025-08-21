@@ -11,7 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Github, GitBranch, Upload, Search, Play, Settings } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Github, GitBranch, Upload, Search, Play, Settings, X, Edit, Trash2, Plus } from "lucide-react";
 
 export default function ScanRepository() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -21,6 +22,10 @@ export default function ScanRepository() {
   const [selectedTools, setSelectedTools] = useState<string[]>(["semgrep", "bandit"]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [customRules, setCustomRules] = useState("");
+  const [isNewScanDialogOpen, setIsNewScanDialogOpen] = useState(false);
+  const [selectedRepoForScan, setSelectedRepoForScan] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingRepo, setEditingRepo] = useState<any>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -106,6 +111,20 @@ export default function ScanRepository() {
       return;
     }
 
+    // Check for duplicate repository URL
+    const existingRepo = repositories?.find((repo: any) => 
+      repo.url.toLowerCase() === repoUrl.toLowerCase()
+    );
+    
+    if (existingRepo) {
+      toast({
+        title: "Duplicate Repository",
+        description: "This repository URL is already added.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createRepositoryMutation.mutate({
       name: repoName,
       url: repoUrl,
@@ -115,26 +134,115 @@ export default function ScanRepository() {
     });
   };
 
-  const handleStartScan = (repositoryId: string) => {
+  const handleDeleteRepository = async (repositoryId: string) => {
+    try {
+      await apiRequest("DELETE", `/api/repositories/${repositoryId}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+      toast({
+        title: "Repository deleted",
+        description: "Repository has been successfully removed.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete repository. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditRepository = (repo: any) => {
+    setEditingRepo(repo);
+    setRepoName(repo.name);
+    setRepoUrl(repo.url);
+    setProvider(repo.provider);
+    setDescription(repo.description || "");
+    setSelectedLanguages(repo.languages || []);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateRepository = async () => {
+    if (!editingRepo || !repoName || !repoUrl) {
+      toast({
+        title: "Validation Error",
+        description: "Repository URL and name are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await apiRequest("PATCH", `/api/repositories/${editingRepo.id}`, {
+        name: repoName,
+        url: repoUrl,
+        provider,
+        description,
+        languages: selectedLanguages,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+      setIsEditDialogOpen(false);
+      setEditingRepo(null);
+      
+      toast({
+        title: "Repository updated",
+        description: "Repository has been successfully updated.",
+      });
+      
+      // Reset form
+      setRepoName("");
+      setRepoUrl("");
+      setDescription("");
+      setSelectedLanguages([]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update repository. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOpenNewScanDialog = (repo?: any) => {
+    if (repo) {
+      setSelectedRepoForScan(repo);
+      // Pre-populate with repository languages if available
+      setSelectedLanguages(repo.languages || []);
+    }
+    setIsNewScanDialogOpen(true);
+  };
+
+  const handleStartScan = () => {
+    if (!selectedRepoForScan) {
+      toast({
+        title: "Error",
+        description: "Please select a repository to scan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (selectedTools.length === 0) {
       toast({
-        title: "Validation Error", 
+        title: "Configuration Error",
         description: "Please select at least one scanning tool.",
         variant: "destructive",
       });
       return;
     }
 
-    const scanConfig = {
-      tools: selectedTools,
-      languages: selectedLanguages.length > 0 ? selectedLanguages : undefined,
-      customRules: customRules ? customRules.split('\n').filter(r => r.trim()) : undefined,
-    };
-
     startScanMutation.mutate({
-      repositoryId,
-      scanConfig,
+      repositoryId: selectedRepoForScan.id,
+      scanConfig: {
+        tools: selectedTools,
+        languages: selectedLanguages,
+        customRules: customRules ? customRules.split('\n').filter(Boolean) : [],
+      }
     });
+
+    // Close dialog and reset
+    setIsNewScanDialogOpen(false);
+    setSelectedRepoForScan(null);
   };
 
   return (
@@ -370,16 +478,35 @@ export default function ScanRepository() {
                         </span>
                       </div>
 
-                      <Button
-                        onClick={() => handleStartScan(repo.id)}
-                        disabled={startScanMutation.isPending}
-                        size="sm"
-                        className="w-full"
-                        data-testid={`button-scan-${repo.id}`}
-                      >
-                        <Search className="h-4 w-4 mr-2" />
-                        Start Scan
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          onClick={() => handleOpenNewScanDialog(repo)}
+                          disabled={startScanMutation.isPending}
+                          size="sm"
+                          className="flex-1"
+                          data-testid={`button-scan-${repo.id}`}
+                        >
+                          <Search className="h-4 w-4 mr-2" />
+                          Scan
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditRepository(repo)}
+                          data-testid={`button-edit-${repo.id}`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteRepository(repo.id)}
+                          className="text-destructive hover:text-destructive"
+                          data-testid={`button-delete-${repo.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -388,6 +515,217 @@ export default function ScanRepository() {
           </CardContent>
         </Card>
       </div>
+
+      {/* New Scan Dialog */}
+      <Dialog open={isNewScanDialogOpen} onOpenChange={setIsNewScanDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configure Scan</DialogTitle>
+            <DialogDescription>
+              {selectedRepoForScan ? 
+                `Configure scan settings for "${selectedRepoForScan.name}"` : 
+                "Select a repository and configure scan settings"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!selectedRepoForScan ? (
+            <div className="space-y-4">
+              <Label>Select Repository</Label>
+              <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                {repositories?.map((repo: any) => (
+                  <div key={repo.id} 
+                       className="flex items-center justify-between p-3 border rounded hover:bg-muted cursor-pointer"
+                       onClick={() => setSelectedRepoForScan(repo)}>
+                    <div className="flex items-center space-x-2">
+                      {repo.provider === "github" && <Github className="h-4 w-4" />}
+                      {repo.provider === "gitlab" && <GitBranch className="h-4 w-4" />}
+                      <span className="font-medium">{repo.name}</span>
+                    </div>
+                    <Badge variant="outline">{repo.provider}</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 p-3 bg-muted rounded">
+                {selectedRepoForScan.provider === "github" && <Github className="h-4 w-4" />}
+                {selectedRepoForScan.provider === "gitlab" && <GitBranch className="h-4 w-4" />}
+                <span className="font-medium">{selectedRepoForScan.name}</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setSelectedRepoForScan(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Scanning Tools */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Scanning Tools</Label>
+                <div className="space-y-3">
+                  {availableTools.map((tool) => (
+                    <div key={tool.id} className="flex items-start space-x-3">
+                      <Checkbox
+                        id={`dialog-${tool.id}`}
+                        checked={selectedTools.includes(tool.id)}
+                        onCheckedChange={() => handleToolToggle(tool.id)}
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor={`dialog-${tool.id}`} className="text-sm font-medium">
+                          {tool.name}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {tool.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Languages */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Target Languages</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {availableLanguages.map((language) => (
+                    <div key={language} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`dialog-${language}`}
+                        checked={selectedLanguages.includes(language)}
+                        onCheckedChange={() => handleLanguageToggle(language)}
+                      />
+                      <Label htmlFor={`dialog-${language}`} className="text-xs capitalize">
+                        {language}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Rules */}
+              <div>
+                <Label htmlFor="dialog-custom-rules" className="text-sm font-medium">
+                  Custom Rules (Optional)
+                </Label>
+                <Textarea
+                  id="dialog-custom-rules"
+                  value={customRules}
+                  onChange={(e) => setCustomRules(e.target.value)}
+                  placeholder="One rule per line..."
+                  className="mt-2 text-xs font-mono"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsNewScanDialogOpen(false);
+              setSelectedRepoForScan(null);
+            }}>
+              Cancel
+            </Button>
+            {selectedRepoForScan && (
+              <Button 
+                onClick={handleStartScan}
+                disabled={startScanMutation.isPending || selectedTools.length === 0}>
+                {startScanMutation.isPending ? "Starting Scan..." : "Start Scan"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Repository Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Repository</DialogTitle>
+            <DialogDescription>
+              Update repository information and scan configuration
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-repo-name">Repository Name</Label>
+              <Input
+                id="edit-repo-name"
+                value={repoName}
+                onChange={(e) => setRepoName(e.target.value)}
+                placeholder="my-crypto-project"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-repo-url">Repository URL</Label>
+              <Input
+                id="edit-repo-url"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                placeholder="https://github.com/username/repository"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-provider">Provider</Label>
+              <Select value={provider} onValueChange={(value: any) => setProvider(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="github">GitHub</SelectItem>
+                  <SelectItem value="gitlab">GitLab</SelectItem>
+                  <SelectItem value="bitbucket">Bitbucket</SelectItem>
+                  <SelectItem value="local">Local Repository</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Brief description of the repository"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Languages</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {availableLanguages.map((language) => (
+                  <div key={language} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edit-${language}`}
+                      checked={selectedLanguages.includes(language)}
+                      onCheckedChange={() => handleLanguageToggle(language)}
+                    />
+                    <Label htmlFor={`edit-${language}`} className="text-xs capitalize">
+                      {language}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsEditDialogOpen(false);
+              setEditingRepo(null);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateRepository}>
+              Update Repository
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
