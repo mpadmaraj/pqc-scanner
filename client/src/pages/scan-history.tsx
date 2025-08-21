@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import type { Scan, Repository, Vulnerability } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,23 +19,23 @@ export default function ScanHistory() {
 
   const queryClient = useQueryClient();
 
-  const { data: scans, isLoading } = useQuery({
+  const { data: scans = [], isLoading } = useQuery<Scan[]>({
     queryKey: ["/api/scans"],
     refetchInterval: 5000, // Poll for active scans
   });
 
-  const { data: repositories } = useQuery({
+  const { data: repositories = [] } = useQuery<Repository[]>({
     queryKey: ["/api/repositories"],
   });
 
-  const { data: scanVulnerabilities } = useQuery({
+  const { data: scanVulnerabilities = [] } = useQuery<Vulnerability[]>({
     queryKey: ["/api/vulnerabilities", selectedScan],
     enabled: !!selectedScan,
   });
 
   const retrySccanMutation = useMutation({
     mutationFn: async (scanId: string) => {
-      const scan = scans?.find((s: any) => s.id === scanId);
+      const scan = scans.find((s) => s.id === scanId);
       if (!scan) throw new Error("Scan not found");
       
       return await apiRequest("POST", "/api/scans", {
@@ -47,12 +48,12 @@ export default function ScanHistory() {
     }
   });
 
-  const filteredScans = scans?.filter((scan: any) => {
-    const repo = repositories?.find((r: any) => r.id === scan.repositoryId);
+  const filteredScans = scans.filter((scan) => {
+    const repo = repositories.find((r) => r.id === scan.repositoryId);
     const matchesSearch = !searchTerm || repo?.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || scan.status === statusFilter;
     return matchesSearch && matchesStatus;
-  }) || [];
+  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -97,7 +98,7 @@ export default function ScanHistory() {
   };
 
   const getRepositoryName = (repositoryId: string) => {
-    const repo = repositories?.find((r: any) => r.id === repositoryId);
+    const repo = repositories.find((r) => r.id === repositoryId);
     return repo?.name || "Unknown Repository";
   };
 
@@ -311,7 +312,7 @@ export default function ScanHistory() {
             <CardHeader>
               <CardTitle>
                 Vulnerabilities - {getRepositoryName(
-                  filteredScans.find((s: any) => s.id === selectedScan)?.repositoryId
+                  filteredScans.find((s) => s.id === selectedScan)?.repositoryId || ""
                 )}
               </CardTitle>
               <CardDescription>

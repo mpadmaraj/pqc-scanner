@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import type { Integration } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,19 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Github, GitlabIcon as Gitlab, Cog, Code, Key, Plus, Settings, CheckCircle, AlertCircle, Copy } from "lucide-react";
 
-interface Integration {
-  id: string;
-  name: string;
-  type: "github_actions" | "jenkins" | "sonarqube" | "api_key";
-  isActive: boolean;
-  config: {
-    enabled: boolean;
-    apiKey?: string;
-    webhookUrl?: string;
-    [key: string]: any;
-  };
-  lastUsed?: string;
-}
 
 export default function Integrations() {
   const [newIntegration, setNewIntegration] = useState({
@@ -39,7 +27,7 @@ export default function Integrations() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: integrations, isLoading } = useQuery({
+  const { data: integrations = [], isLoading } = useQuery<Integration[]>({
     queryKey: ["/api/integrations"],
   });
 
@@ -307,7 +295,7 @@ export default function Integrations() {
                         </Label>
                         <Switch
                           id={`toggle-${integration.id}`}
-                          checked={integration.isActive}
+                          checked={integration.isActive ?? false}
                           onCheckedChange={(checked) => handleToggleIntegration(integration.id, checked)}
                           data-testid={`switch-active-${integration.id}`}
                         />

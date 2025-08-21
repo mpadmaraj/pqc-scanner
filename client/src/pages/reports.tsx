@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import type { Repository, Vulnerability } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,15 +15,15 @@ export default function Reports() {
   const [selectedRepository, setSelectedRepository] = useState<string>("all");
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("30d");
 
-  const { data: repositories } = useQuery({
+  const { data: repositories = [] } = useQuery<Repository[]>({
     queryKey: ["/api/repositories"],
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats = {} } = useQuery<Record<string, any>>({
     queryKey: ["/api/dashboard/stats"],
   });
 
-  const { data: vulnerabilities } = useQuery({
+  const { data: vulnerabilities = [] } = useQuery<Vulnerability[]>({
     queryKey: ["/api/vulnerabilities", selectedRepository !== "all" ? selectedRepository : undefined],
   });
 
@@ -33,13 +34,13 @@ export default function Reports() {
   });
 
   // Calculate actual data based on vulnerabilities
-  const vulnerabilitysByType = vulnerabilities?.reduce((acc: any, vuln: any) => {
+  const vulnerabilitysByType = vulnerabilities.reduce((acc: Record<string, number>, vuln) => {
     const severity = vuln.severity || 'medium';
     acc[severity] = (acc[severity] || 0) + 1;
     return acc;
-  }, {}) || {};
+  }, {});
 
-  const totalVulnerabilities = vulnerabilities?.length || 0;
+  const totalVulnerabilities = vulnerabilities.length;
   const criticalCount = vulnerabilitysByType.critical || 0;
   const highCount = vulnerabilitysByType.high || 0;
   const mediumCount = vulnerabilitysByType.medium || 0;
@@ -47,7 +48,7 @@ export default function Reports() {
 
   // Use real stats or fallback to 0
   const realStats = {
-    totalRepositories: stats?.totalRepositories || repositories?.length || 0,
+    totalRepositories: stats?.totalRepositories || repositories.length || 0,
     totalScans: stats?.totalScans || 0,
     totalVulnerabilities: stats?.totalVulnerabilities || totalVulnerabilities,
     criticalVulnerabilities: stats?.criticalVulnerabilities || criticalCount,

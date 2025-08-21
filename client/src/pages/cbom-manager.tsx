@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import type { Repository, CbomReport } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,15 +21,15 @@ export default function CbomManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: repositories } = useQuery({
+  const { data: repositories = [] } = useQuery<Repository[]>({
     queryKey: ["/api/repositories"],
   });
 
-  const { data: cbomReports, isLoading } = useQuery({
+  const { data: cbomReports = [], isLoading } = useQuery<CbomReport[]>({
     queryKey: ["/api/cbom"],
   });
 
-  const { data: selectedCbomData } = useQuery({
+  const { data: selectedCbomData } = useQuery<CbomReport>({
     queryKey: ["/api/cbom", selectedCbom],
     enabled: !!selectedCbom,
   });
@@ -53,15 +54,15 @@ export default function CbomManager() {
     }
   });
 
-  const filteredReports = cbomReports?.filter((report: any) => {
-    const repo = repositories?.find((r: any) => r.id === report.repositoryId);
+  const filteredReports = cbomReports.filter((report) => {
+    const repo = repositories.find((r) => r.id === report.repositoryId);
     const matchesSearch = !searchTerm || repo?.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRepo = selectedRepository === "all" || report.repositoryId === selectedRepository;
     return matchesSearch && matchesRepo;
-  }) || [];
+  });
 
   const getRepositoryName = (repositoryId: string) => {
-    const repo = repositories?.find((r: any) => r.id === repositoryId);
+    const repo = repositories.find((r) => r.id === repositoryId);
     return repo?.name || "Unknown Repository";
   };
 
@@ -128,10 +129,10 @@ export default function CbomManager() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {repositories.map((repo: any) => {
+                      {repositories.map((repo) => {
                         const hasCbom = cbomReports?.some((report: any) => report.repositoryId === repo.id);
                         const cbomReport = cbomReports?.find((report: any) => report.repositoryId === repo.id);
-                        const complianceScore = cbomReport ? getComplianceScore(cbomReport.cryptoAssets) : 0;
+                        const complianceScore = cbomReport ? getComplianceScore(cbomReport.cryptoAssets || []) : 0;
                         const risk = getRiskLevel(complianceScore);
 
                         return (
@@ -142,7 +143,7 @@ export default function CbomManager() {
                                   {repo.name}
                                 </h4>
                                 <p className="text-sm text-muted-foreground">
-                                  {hasCbom ? `${cbomReport.cryptoAssets.length} crypto assets` : "No CBOM generated"}
+                                  {hasCbom && cbomReport ? `${cbomReport.cryptoAssets?.length || 0} crypto assets` : "No CBOM generated"}
                                 </p>
                               </div>
                             </div>
