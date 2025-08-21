@@ -1,8 +1,71 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { vulnerabilities, scans } from '../../shared/schema';
-import { eq, count, and } from 'drizzle-orm';
+import { sql, eq, count } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, integer, jsonb, pgEnum } from "drizzle-orm/pg-core";
+
+// Schema definitions
+const severityEnum = pgEnum("severity", ["critical", "high", "medium", "low", "info"]);
+const scanStatusEnum = pgEnum("scan_status", ["pending", "scanning", "completed", "failed"]);
+const vulnerabilityStatusEnum = pgEnum("vulnerability_status", ["new", "reviewing", "fixed", "false_positive", "ignored"]);
+const repositoryProviderEnum = pgEnum("repository_provider", ["github", "gitlab", "bitbucket", "local"]);
+
+const repositories = pgTable("repositories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  provider: repositoryProviderEnum("provider").notNull(),
+  description: text("description"),
+  languages: jsonb("languages").$type<string[]>().default([]),
+  lastScanAt: timestamp("last_scan_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+const scans = pgTable("scans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  repositoryId: varchar("repository_id").references(() => repositories.id).notNull(),
+  status: scanStatusEnum("status").default("pending").notNull(),
+  progress: integer("progress").default(0),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  errorMessage: text("error_message"),
+  totalFiles: integer("total_files").default(0),
+  scanConfig: jsonb("scan_config").$type<{
+    tools: string[];
+    languages: string[];
+    customRules?: string[];
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+const vulnerabilities = pgTable("vulnerabilities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scanId: varchar("scan_id").references(() => scans.id).notNull(),
+  repositoryId: varchar("repository_id").references(() => repositories.id).notNull(),
+  cveId: text("cve_id"),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  severity: severityEnum("severity").notNull(),
+  status: vulnerabilityStatusEnum("status").default("new").notNull(),
+  filePath: text("file_path").notNull(),
+  startLine: integer("start_line"),
+  endLine: integer("end_line"),
+  codeSnippet: text("code_snippet"),
+  recommendation: text("recommendation"),
+  workaround: text("workaround"),
+  cvssScore: text("cvss_score"),
+  pqcCategory: text("pqc_category"),
+  detectedBy: text("detected_by").notNull(),
+  metadata: jsonb("metadata").$type<{
+    library?: string;
+    algorithm?: string;
+    keySize?: number;
+    nistStandard?: string;
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
 // Configure for Vercel edge runtime
 if (typeof window === 'undefined') {

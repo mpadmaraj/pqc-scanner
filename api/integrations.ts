@@ -1,8 +1,23 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { integrations } from '../shared/schema';
-import { desc } from 'drizzle-orm';
+import { sql, desc } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+
+// Schema definitions
+const integrations = pgTable("integrations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  config: jsonb("config").$type<{
+    apiKey?: string;
+    webhookUrl?: string;
+    enabled: boolean;
+  }>().notNull(),
+  isActive: boolean("is_active").default(true),
+  lastUsed: timestamp("last_used"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // Configure for Vercel edge runtime
 if (typeof window === 'undefined') {

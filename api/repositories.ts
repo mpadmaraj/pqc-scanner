@@ -1,7 +1,31 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { repositories, insertRepositorySchema } from '../shared/schema';
+import { sql } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+
+// Schema definitions directly in file to avoid module resolution issues
+const repositoryProviderEnum = pgEnum("repository_provider", ["github", "gitlab", "bitbucket", "local"]);
+
+const repositories = pgTable("repositories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  provider: repositoryProviderEnum("provider").notNull(),
+  description: text("description"),
+  languages: jsonb("languages").$type<string[]>().default([]),
+  lastScanAt: timestamp("last_scan_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+const insertRepositorySchema = createInsertSchema(repositories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastScanAt: true,
+});
 
 // Configure for Vercel edge runtime
 if (typeof window === 'undefined') {
@@ -45,9 +69,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const requestData = {
         name: req.body.name,
         url: req.body.url,
-        provider: req.body.provider || 'github',
+        provider: req.body.provider || 'github' as const,
         description: req.body.description || null,
-        languages: req.body.languages || [],
+        languages: Array.isArray(req.body.languages) ? req.body.languages : [],
       };
       
       console.log('Processed request data:', requestData);

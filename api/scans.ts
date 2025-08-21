@@ -1,8 +1,47 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { scans, repositories, insertScanSchema } from '../shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { sql, eq, desc } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, integer, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+
+// Schema definitions
+const scanStatusEnum = pgEnum("scan_status", ["pending", "scanning", "completed", "failed"]);
+const repositoryProviderEnum = pgEnum("repository_provider", ["github", "gitlab", "bitbucket", "local"]);
+
+const repositories = pgTable("repositories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  provider: repositoryProviderEnum("provider").notNull(),
+  description: text("description"),
+  languages: jsonb("languages").$type<string[]>().default([]),
+  lastScanAt: timestamp("last_scan_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+const scans = pgTable("scans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  repositoryId: varchar("repository_id").references(() => repositories.id).notNull(),
+  status: scanStatusEnum("status").default("pending").notNull(),
+  progress: integer("progress").default(0),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  errorMessage: text("error_message"),
+  totalFiles: integer("total_files").default(0),
+  scanConfig: jsonb("scan_config").$type<{
+    tools: string[];
+    languages: string[];
+    customRules?: string[];
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+const insertScanSchema = createInsertSchema(scans).omit({
+  id: true,
+  createdAt: true,
+});
 
 // Configure for Vercel edge runtime
 if (typeof window === 'undefined') {
@@ -53,7 +92,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'POST') {
       console.log('Scan creation request body:', req.body);
       
-      const data = insertScanSchema.parse(req.body);
+      // Ensure arrays are properly formatted
+      const scanData = {
+        ...req.body,
+        scanConfig: {
+          tools: Array.isArray(req.body.scanConfig?.tools) ? req.body.scanConfig.tools : [],
+          languages: Array.isArray(req.body.scanConfig?.languages) ? req.body.scanConfig.languages : [],
+          customRules: Array.isArray(req.body.scanConfig?.customRules) ? req.body.scanConfig.customRules : undefined,
+        }
+      };
+      
+      const data = insertScanSchema.parse(scanData);
       console.log('Schema validation passed, creating scan...');
       
       const [scan] = await db
