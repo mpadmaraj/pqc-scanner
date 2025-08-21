@@ -41,6 +41,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/repositories/:id", async (req, res) => {
+    try {
+      const updateData = {
+        name: req.body.name,
+        url: req.body.url,
+        provider: req.body.provider,
+        description: req.body.description,
+        languages: Array.isArray(req.body.languages) ? req.body.languages : [],
+      };
+      const repository = await storage.updateRepository(req.params.id, updateData);
+      res.json(repository);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid repository data" });
+    }
+  });
+
+  app.delete("/api/repositories/:id", async (req, res) => {
+    try {
+      const repository = await storage.getRepository(req.params.id);
+      if (!repository) {
+        return res.status(404).json({ error: "Repository not found" });
+      }
+      
+      await storage.deleteRepository(req.params.id);
+      res.json({ message: "Repository deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete repository" });
+    }
+  });
+
   // Scans
   app.get("/api/scans", async (req, res) => {
     try {

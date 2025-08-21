@@ -22,6 +22,7 @@ export interface IStorage {
   getRepository(id: string): Promise<Repository | undefined>;
   createRepository(repository: InsertRepository): Promise<Repository>;
   updateRepository(id: string, updates: Partial<Repository>): Promise<Repository>;
+  deleteRepository(id: string): Promise<void>;
 
   // Scan operations
   getScans(repositoryId?: string): Promise<Scan[]>;
@@ -113,6 +114,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(repositories.id, id))
       .returning();
     return updated;
+  }
+
+  async deleteRepository(id: string): Promise<void> {
+    await db.delete(repositories).where(eq(repositories.id, id));
   }
 
   // Scan operations

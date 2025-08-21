@@ -46,9 +46,9 @@ export default function Dashboard() {
     queryKey: ["/api/integrations"],
   });
 
-  const activeScansList = activeScans?.filter((scan: any) => 
+  const activeScansList = Array.isArray(activeScans) ? activeScans.filter((scan: any) => 
     scan.status === "scanning" || scan.status === "pending"
-  ) || [];
+  ) : [];
 
   const availableTools = [
     { id: "semgrep", name: "Semgrep", description: "Static analysis for security vulnerabilities" },
@@ -57,7 +57,7 @@ export default function Dashboard() {
     { id: "crypto-scanner", name: "Crypto Scanner", description: "Cryptographic implementation analyzer" }
   ];
 
-  const availableLanguages = ["javascript", "python", "java", "go", "rust", "cpp", "csharp", "php"];
+  const availableLanguages = ["java", "javascript", "python"];
 
   const startScanMutation = useMutation({
     mutationFn: async (scanData: any) => {
@@ -162,7 +162,7 @@ export default function Dashboard() {
       {/* Dashboard Content */}
       <div className="p-6">
         {/* Stats Cards */}
-        <StatsCards stats={stats} />
+        <StatsCards stats={stats as any} />
 
         {/* Active Scans with Live Updates */}
         {activeScansList.length > 0 && (
@@ -195,7 +195,7 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            <VulnerabilityTable vulnerabilities={recentVulnerabilities} />
+            <VulnerabilityTable vulnerabilities={Array.isArray(recentVulnerabilities) ? recentVulnerabilities : []} />
           </CardContent>
         </Card>
 
@@ -286,13 +286,13 @@ export default function Dashboard() {
             <div className="space-y-4">
               <Label>Select Repository</Label>
               <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
-                {repositories?.length === 0 ? (
+                {!Array.isArray(repositories) || repositories.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>No repositories available</p>
                     <p className="text-sm">Add repositories from the Scan Repository page first</p>
                   </div>
                 ) : (
-                  repositories?.map((repo: any) => (
+                  Array.isArray(repositories) && repositories.map((repo: any) => (
                     <div key={repo.id} 
                          className="flex items-center justify-between p-3 border rounded hover:bg-muted cursor-pointer"
                          onClick={() => {

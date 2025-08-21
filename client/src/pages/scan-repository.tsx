@@ -82,7 +82,7 @@ export default function ScanRepository() {
   ];
 
   const availableLanguages = [
-    "python", "java", "javascript", "typescript", "c", "cpp", "csharp", "go", "ruby", "php"
+    "java", "javascript", "python"
   ];
 
   const handleToolToggle = (toolId: string) => {
@@ -112,9 +112,9 @@ export default function ScanRepository() {
     }
 
     // Check for duplicate repository URL
-    const existingRepo = repositories?.find((repo: any) => 
+    const existingRepo = Array.isArray(repositories) ? repositories.find((repo: any) => 
       repo.url.toLowerCase() === repoUrl.toLowerCase()
-    );
+    ) : undefined;
     
     if (existingRepo) {
       toast({
@@ -201,7 +201,7 @@ export default function ScanRepository() {
           // Mock GitHub API detection for now - in real implementation would call GitHub API
           const commonLanguages = ['javascript', 'python', 'java', 'typescript', 'go'];
           const randomLanguages = commonLanguages.slice(0, Math.floor(Math.random() * 3) + 1);
-          detectedLanguages = [...new Set([...selectedLanguages, ...randomLanguages])];
+          detectedLanguages = Array.from(new Set([...selectedLanguages, ...randomLanguages]));
           
           toast({
             title: "Languages detected",
@@ -474,14 +474,14 @@ export default function ScanRepository() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {!repositories || repositories.length === 0 ? (
+            {!Array.isArray(repositories) || repositories.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <p>No repositories added yet</p>
                 <p className="text-sm">Add a repository above to get started</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {repositories.map((repo: any) => (
+                {Array.isArray(repositories) && repositories.map((repo: any) => (
                   <Card key={repo.id} className="border-2 hover:border-primary/50 transition-colors">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
@@ -574,7 +574,7 @@ export default function ScanRepository() {
             <div className="space-y-4">
               <Label>Select Repository</Label>
               <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
-                {repositories?.map((repo: any) => (
+                {Array.isArray(repositories) && repositories.map((repo: any) => (
                   <div key={repo.id} 
                        className="flex items-center justify-between p-3 border rounded hover:bg-muted cursor-pointer"
                        onClick={() => setSelectedRepoForScan(repo)}>
@@ -755,45 +755,6 @@ export default function ScanRepository() {
               <p className="text-xs text-muted-foreground mt-2">
                 Languages are auto-detected from your repository. You can modify the selection above.
               </p>
-            </div>
-
-            {/* Scanning Tools for Edit */}
-            <div>
-              <Label className="text-sm font-medium mb-3 block">Additional Scanning Tools</Label>
-              <div className="space-y-3">
-                {availableTools.map((tool) => (
-                  <div key={tool.id} className="flex items-start space-x-3">
-                    <Checkbox
-                      id={`edit-tool-${tool.id}`}
-                      checked={selectedTools.includes(tool.id)}
-                      onCheckedChange={() => handleToolToggle(tool.id)}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor={`edit-tool-${tool.id}`} className="text-sm font-medium">
-                        {tool.name}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {tool.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Rules for Edit */}
-            <div>
-              <Label htmlFor="edit-custom-rules" className="text-sm font-medium">
-                Custom Rules (Optional)
-              </Label>
-              <Textarea
-                id="edit-custom-rules"
-                value={customRules}
-                onChange={(e) => setCustomRules(e.target.value)}
-                placeholder="One rule per line..."
-                className="mt-2 text-xs font-mono"
-                rows={3}
-              />
             </div>
           </div>
 
