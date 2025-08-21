@@ -85,10 +85,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json(repository);
     }
 
-    // Handle individual repository operations
-    const url = new URL(req.url || '', `http://${req.headers.host}`);
-    const pathParts = url.pathname.split('/');
-    const repositoryId = pathParts[pathParts.length - 1];
+    // Handle individual repository operations - extract ID from URL
+    const urlParts = (req.url || '').split('/');
+    const repositoryId = urlParts[urlParts.length - 1];
     
     if (req.method === 'PATCH' && repositoryId && repositoryId !== 'repositories') {
       const updateSchema = insertRepositorySchema.partial();

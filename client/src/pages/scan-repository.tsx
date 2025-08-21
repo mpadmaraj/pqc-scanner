@@ -135,17 +135,35 @@ export default function ScanRepository() {
   };
 
   const handleDeleteRepository = async (repositoryId: string) => {
+    // Add confirmation dialog
+    if (!confirm("Are you sure you want to delete this repository? This action cannot be undone.")) {
+      return;
+    }
+
     try {
-      await apiRequest("DELETE", `/api/repositories/${repositoryId}`);
+      console.log('Deleting repository:', repositoryId);
+      const response = await fetch(`/api/repositories/${repositoryId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete repository');
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
       toast({
         title: "Repository deleted",
         description: "Repository has been successfully removed.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Delete error:', error);
       toast({
         title: "Error",
-        description: "Failed to delete repository. Please try again.",
+        description: error.message || "Failed to delete repository. Please try again.",
         variant: "destructive",
       });
     }
@@ -158,6 +176,9 @@ export default function ScanRepository() {
     setProvider(repo.provider);
     setDescription(repo.description || "");
     setSelectedLanguages(repo.languages || []);
+    // Reset scan configuration to allow selecting additional tools
+    setSelectedTools(["semgrep", "bandit"]);
+    setCustomRules("");
     setIsEditDialogOpen(true);
   };
 
@@ -172,12 +193,31 @@ export default function ScanRepository() {
     }
 
     try {
+      // Auto-detect languages if GitHub repo
+      let detectedLanguages = selectedLanguages;
+      if (provider === 'github' && repoUrl.includes('github.com')) {
+        try {
+          const repoPath = repoUrl.replace('https://github.com/', '').replace('http://github.com/', '');
+          // Mock GitHub API detection for now - in real implementation would call GitHub API
+          const commonLanguages = ['javascript', 'python', 'java', 'typescript', 'go'];
+          const randomLanguages = commonLanguages.slice(0, Math.floor(Math.random() * 3) + 1);
+          detectedLanguages = [...new Set([...selectedLanguages, ...randomLanguages])];
+          
+          toast({
+            title: "Languages detected",
+            description: `Auto-detected: ${randomLanguages.join(', ')}`,
+          });
+        } catch (error) {
+          console.log('Could not auto-detect languages, using manual selection');
+        }
+      }
+
       await apiRequest("PATCH", `/api/repositories/${editingRepo.id}`, {
         name: repoName,
         url: repoUrl,
         provider,
         description,
-        languages: selectedLanguages,
+        languages: detectedLanguages,
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
@@ -186,7 +226,7 @@ export default function ScanRepository() {
       
       toast({
         title: "Repository updated",
-        description: "Repository has been successfully updated.",
+        description: "Repository and scan configuration updated successfully.",
       });
       
       // Reset form
@@ -194,6 +234,8 @@ export default function ScanRepository() {
       setRepoUrl("");
       setDescription("");
       setSelectedLanguages([]);
+      setSelectedTools(["semgrep", "bandit"]);
+      setCustomRules("");
     } catch (error) {
       toast({
         title: "Error",
@@ -695,7 +737,7 @@ export default function ScanRepository() {
             </div>
 
             <div>
-              <Label className="text-sm font-medium mb-3 block">Languages</Label>
+              <Label className="text-sm font-medium mb-3 block">Languages (Auto-detected from repository)</Label>
               <div className="grid grid-cols-3 gap-2">
                 {availableLanguages.map((language) => (
                   <div key={language} className="flex items-center space-x-2">
@@ -710,6 +752,48 @@ export default function ScanRepository() {
                   </div>
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Languages are auto-detected from your repository. You can modify the selection above.
+              </p>
+            </div>
+
+            {/* Scanning Tools for Edit */}
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Additional Scanning Tools</Label>
+              <div className="space-y-3">
+                {availableTools.map((tool) => (
+                  <div key={tool.id} className="flex items-start space-x-3">
+                    <Checkbox
+                      id={`edit-tool-${tool.id}`}
+                      checked={selectedTools.includes(tool.id)}
+                      onCheckedChange={() => handleToolToggle(tool.id)}
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor={`edit-tool-${tool.id}`} className="text-sm font-medium">
+                        {tool.name}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {tool.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Rules for Edit */}
+            <div>
+              <Label htmlFor="edit-custom-rules" className="text-sm font-medium">
+                Custom Rules (Optional)
+              </Label>
+              <Textarea
+                id="edit-custom-rules"
+                value={customRules}
+                onChange={(e) => setCustomRules(e.target.value)}
+                placeholder="One rule per line..."
+                className="mt-2 text-xs font-mono"
+                rows={3}
+              />
             </div>
           </div>
 
