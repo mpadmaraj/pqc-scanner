@@ -117,6 +117,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteRepository(id: string): Promise<void> {
+    // Delete related records first to avoid foreign key constraint errors
+    
+    // First, get all vulnerabilities for this repository
+    const repositoryVulns = await db
+      .select({ id: vulnerabilities.id })
+      .from(vulnerabilities)
+      .where(eq(vulnerabilities.repositoryId, id));
+    
+    // Delete VDR reports for these vulnerabilities
+    if (repositoryVulns.length > 0) {
+      const vulnIds = repositoryVulns.map(v => v.id);
+      for (const vulnId of vulnIds) {
+        await db.delete(vdrReports).where(eq(vdrReports.vulnerabilityId, vulnId));
+      }
+    }
+    
+    // Delete CBOM reports
+    await db.delete(cbomReports).where(eq(cbomReports.repositoryId, id));
+    
+    // Delete vulnerabilities
+    await db.delete(vulnerabilities).where(eq(vulnerabilities.repositoryId, id));
+    
+    // Delete scans
+    await db.delete(scans).where(eq(scans.repositoryId, id));
+    
+    // Finally delete the repository
     await db.delete(repositories).where(eq(repositories.id, id));
   }
 

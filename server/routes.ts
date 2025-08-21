@@ -67,7 +67,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteRepository(req.params.id);
       res.json({ message: "Repository deleted successfully" });
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete repository" });
+      console.error("Delete repository error:", error);
+      res.status(500).json({ error: "Failed to delete repository", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
