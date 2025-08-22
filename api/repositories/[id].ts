@@ -48,45 +48,69 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     const db = drizzle({ client: pool });
 
-    if (req.method === 'GET') {
-      const allRepositories = await db.select().from(repositories);
-      return res.json(allRepositories);
+    // Extract repository ID from query parameters (Vercel dynamic routing)
+    const { id: repositoryId } = req.query;
+    
+    if (!repositoryId || typeof repositoryId !== 'string') {
+      return res.status(400).json({ error: 'Repository ID is required' });
     }
 
-    if (req.method === 'POST') {
-      console.log('Repository creation request body:', req.body);
+    if (req.method === 'GET') {
+      const [repository] = await db
+        .select()
+        .from(repositories)
+        .where(eq(repositories.id, repositoryId));
       
-      // Validate required fields
-      if (!req.body.name || !req.body.url) {
-        return res.status(400).json({ 
-          error: "Name and URL are required fields" 
-        });
+      if (!repository) {
+        return res.status(404).json({ error: 'Repository not found' });
       }
       
-      // Prepare data with defaults
-      const requestData = {
-        name: req.body.name,
-        url: req.body.url,
-        provider: req.body.provider || 'github' as const,
-        description: req.body.description || null,
-        languages: Array.isArray(req.body.languages) ? req.body.languages : [],
-      };
-      
-      console.log('Processed request data:', requestData);
-      const data = insertRepositorySchema.parse(requestData);
-      console.log('Schema validation passed, creating repository...');
-      
-      const [repository] = await db
-        .insert(repositories)
-        .values([data])
-        .returning();
-      
-      console.log('Repository created successfully:', repository.id);
       return res.json(repository);
     }
 
-    // This endpoint only handles collection operations (GET /api/repositories and POST /api/repositories)
-    // Individual repository operations are handled by /api/repositories/[id].ts
+    if (req.method === 'PATCH') {
+      const updateSchema = insertRepositorySchema.partial();
+      const validatedData = updateSchema.parse(req.body);
+      
+      const updateData: any = {
+        ...validatedData,
+        updatedAt: new Date()
+      };
+      
+      // Ensure languages is properly formatted as array
+      if (updateData.languages && !Array.isArray(updateData.languages)) {
+        updateData.languages = [];
+      }
+      
+      const [updatedRepository] = await db
+        .update(repositories)
+        .set(updateData)
+        .where(eq(repositories.id, repositoryId))
+        .returning();
+      
+      if (!updatedRepository) {
+        return res.status(404).json({ error: 'Repository not found' });
+      }
+      
+      return res.json(updatedRepository);
+    }
+
+    if (req.method === 'DELETE') {
+      console.log(`Attempting to delete repository with ID: ${repositoryId}`);
+      
+      const [deletedRepository] = await db
+        .delete(repositories)
+        .where(eq(repositories.id, repositoryId))
+        .returning();
+      
+      if (!deletedRepository) {
+        console.log(`Repository with ID ${repositoryId} not found`);
+        return res.status(404).json({ error: 'Repository not found' });
+      }
+      
+      console.log(`Successfully deleted repository: ${deletedRepository.id}`);
+      return res.json({ message: 'Repository deleted successfully', id: deletedRepository.id });
+    }
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
