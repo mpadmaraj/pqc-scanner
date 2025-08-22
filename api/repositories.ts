@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         url: req.body.url,
         provider: req.body.provider || 'github' as const,
         description: req.body.description || null,
-        languages: Array.isArray(req.body.languages) ? req.body.languages : [],
+        languages: Array.isArray(req.body.languages) ? req.body.languages as string[] : [],
       };
       
       console.log('Processed request data:', requestData);
