@@ -98,18 +98,74 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'DELETE') {
       console.log(`Attempting to delete repository with ID: ${repositoryId}`);
       
+      // First check if repository exists
+      const [existingRepository] = await db
+        .select()
+        .from(repositories)
+        .where(eq(repositories.id, repositoryId));
+      
+      if (!existingRepository) {
+        console.log(`Repository with ID ${repositoryId} not found`);
+        return res.status(404).json({ error: 'Repository not found' });
+      }
+      
+      // Define related tables that need to be cleaned up
+      const scansTable = pgTable("scans", {
+        id: varchar("id").primaryKey(),
+        repositoryId: varchar("repository_id").notNull(),
+      });
+      
+      const vulnerabilitiesTable = pgTable("vulnerabilities", {
+        id: varchar("id").primaryKey(),
+        repositoryId: varchar("repository_id").notNull(),
+        scanId: varchar("scan_id").notNull(),
+      });
+      
+      const cbomReportsTable = pgTable("cbom_reports", {
+        id: varchar("id").primaryKey(),
+        repositoryId: varchar("repository_id").notNull(),
+      });
+      
+      const vdrReportsTable = pgTable("vdr_reports", {
+        id: varchar("id").primaryKey(),
+        vulnerabilityId: varchar("vulnerability_id").notNull(),
+      });
+      
+      // Get all vulnerabilities for this repository to delete their VDR reports
+      const vulnerabilitiesToDelete = await db
+        .select({ id: vulnerabilitiesTable.id })
+        .from(vulnerabilitiesTable)
+        .where(eq(vulnerabilitiesTable.repositoryId, repositoryId));
+      
+      // Delete related records in the correct order (most dependent child tables first)
+      if (vulnerabilitiesToDelete.length > 0) {
+        console.log('Deleting related VDR reports...');
+        for (const vuln of vulnerabilitiesToDelete) {
+          await db.delete(vdrReportsTable).where(eq(vdrReportsTable.vulnerabilityId, vuln.id));
+        }
+      }
+      
+      console.log('Deleting related vulnerabilities...');
+      await db.delete(vulnerabilitiesTable).where(eq(vulnerabilitiesTable.repositoryId, repositoryId));
+      
+      console.log('Deleting related CBOM reports...');
+      await db.delete(cbomReportsTable).where(eq(cbomReportsTable.repositoryId, repositoryId));
+      
+      console.log('Deleting related scans...');
+      await db.delete(scansTable).where(eq(scansTable.repositoryId, repositoryId));
+      
+      // Finally delete the repository
+      console.log('Deleting repository...');
       const [deletedRepository] = await db
         .delete(repositories)
         .where(eq(repositories.id, repositoryId))
         .returning();
       
-      if (!deletedRepository) {
-        console.log(`Repository with ID ${repositoryId} not found`);
-        return res.status(404).json({ error: 'Repository not found' });
-      }
-      
-      console.log(`Successfully deleted repository: ${deletedRepository.id}`);
-      return res.json({ message: 'Repository deleted successfully', id: deletedRepository.id });
+      console.log(`Successfully deleted repository and all related data: ${deletedRepository.id}`);
+      return res.json({ 
+        message: 'Repository and all related data deleted successfully', 
+        id: deletedRepository.id 
+      });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

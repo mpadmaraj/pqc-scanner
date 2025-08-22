@@ -78,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       const [repository] = await db
         .insert(repositories)
-        .values([data])
+        .values(data)
         .returning();
       
       console.log('Repository created successfully:', repository.id);
