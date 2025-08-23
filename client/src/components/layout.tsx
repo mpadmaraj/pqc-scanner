@@ -81,9 +81,11 @@ export default function Layout({ children }: LayoutProps) {
             <Button variant="ghost" size="icon" data-testid="button-notifications">
               <Bell className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" data-testid="button-settings">
-              <Settings className="h-5 w-5" />
-            </Button>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon" data-testid="button-settings">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                 <span className="text-sm font-medium">D</span>
