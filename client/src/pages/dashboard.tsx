@@ -12,7 +12,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Plus, CheckCircle, XCircle, AlertTriangle, Github, GitBranch, Search, X } from "lucide-react";
+import { Plus, CheckCircle, XCircle, AlertTriangle, Github, GitBranch, Search, X, TrendingUp, PieChart, Library } from "lucide-react";
+import { PieChart as RechartsPieChart, Pie as RechartsPie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import WordCloud from "@/components/word-cloud";
 
 export default function Dashboard() {
   const [isNewScanDialogOpen, setIsNewScanDialogOpen] = useState(false);
@@ -44,6 +46,27 @@ export default function Dashboard() {
 
   const { data: integrations } = useQuery({
     queryKey: ["/api/integrations"],
+  });
+
+  // Enhanced dashboard data
+  const { data: languageStats } = useQuery({
+    queryKey: ["/api/dashboard/language-stats"],
+  });
+
+  const { data: cryptoAssets } = useQuery({
+    queryKey: ["/api/dashboard/crypto-assets"],
+  });
+
+  const { data: cryptoLibraries } = useQuery({
+    queryKey: ["/api/dashboard/crypto-libraries"],
+  });
+
+  const { data: vulnerabilityTrends } = useQuery({
+    queryKey: ["/api/dashboard/vulnerability-trends"],
+  });
+
+  const { data: detailedStats } = useQuery({
+    queryKey: ["/api/dashboard/detailed-stats"],
   });
 
   const activeScansList = Array.isArray(activeScans) ? activeScans.filter((scan: any) => 
@@ -147,10 +170,6 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button variant="outline" data-testid="button-export-report">
-              <Download className="mr-2 h-4 w-4" />
-              Export Report
-            </Button>
             <Button onClick={handleOpenNewScanDialog} data-testid="button-new-scan">
               <Plus className="mr-2 h-4 w-4" />
               New Scan
@@ -183,6 +202,184 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Enhanced Stats Section */}
+        {detailedStats && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <TrendingUp className="mr-2 h-5 w-5" />
+                Repository Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="stat-total-repositories">
+                    {detailedStats.totalRepositories}
+                  </div>
+                  <div className="text-sm text-blue-600 dark:text-blue-400">Total Repositories</div>
+                </div>
+                <div className="text-center p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="stat-total-scanned">
+                    {detailedStats.totalScanned}
+                  </div>
+                  <div className="text-sm text-green-600 dark:text-green-400">Repositories Scanned</div>
+                </div>
+                <div className="text-center p-4 bg-red-50 dark:bg-red-950 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600 dark:text-red-400" data-testid="stat-total-vulnerabilities">
+                    {detailedStats.totalVulnerabilities}
+                  </div>
+                  <div className="text-sm text-red-600 dark:text-red-400">Total Vulnerabilities</div>
+                </div>
+                <div className="text-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                  <div className="text-xs font-medium text-purple-600 dark:text-purple-400" data-testid="stat-last-scan-date">
+                    {detailedStats.lastScanDate 
+                      ? new Date(detailedStats.lastScanDate).toLocaleDateString()
+                      : 'Never'
+                    }
+                  </div>
+                  <div className="text-sm text-purple-600 dark:text-purple-400">Last Scan</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Repository Languages Donut Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <PieChart className="mr-2 h-5 w-5" />
+                Repository Languages
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {languageStats && languageStats.length > 0 ? (
+                <div className="h-64" data-testid="chart-language-stats">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <RechartsPie
+                        data={languageStats}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="count"
+                      >
+                        {languageStats.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6'][index % 5]} />
+                        ))}
+                      </RechartsPie>
+                      <Tooltip formatter={(value, name) => [`${value} repositories`, name]} />
+                      <Legend formatter={(value) => languageStats.find(item => item.count.toString() === value)?.language || value} />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-muted-foreground">
+                  No language data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Crypto Assets Donut Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <PieChart className="mr-2 h-5 w-5" />
+                Crypto Asset Types
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {cryptoAssets && cryptoAssets.length > 0 ? (
+                <div className="h-64" data-testid="chart-crypto-assets">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <RechartsPie
+                        data={cryptoAssets}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="count"
+                      >
+                        {cryptoAssets.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'][index % 5]} />
+                        ))}
+                      </RechartsPie>
+                      <Tooltip formatter={(value, name) => [`${value} assets`, name]} />
+                      <Legend formatter={(value) => cryptoAssets.find(item => item.count.toString() === value)?.assetType || value} />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-muted-foreground">
+                  No crypto assets data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Word Cloud and Vulnerability Trends */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Crypto Libraries Word Cloud */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Library className="mr-2 h-5 w-5" />
+                Crypto Libraries Used
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <WordCloud data={cryptoLibraries || []} />
+            </CardContent>
+          </Card>
+
+          {/* Vulnerability Trends */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <TrendingUp className="mr-2 h-5 w-5" />
+                Vulnerability Trends (30 Days)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {vulnerabilityTrends && vulnerabilityTrends.length > 0 ? (
+                <div className="h-64" data-testid="chart-vulnerability-trends">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={vulnerabilityTrends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" fontSize={10} />
+                      <YAxis />
+                      <Tooltip labelFormatter={(label) => `Date: ${label}`} />
+                      <Legend />
+                      <Area 
+                        type="monotone" 
+                        dataKey="count" 
+                        stackId="1" 
+                        stroke="#EF4444" 
+                        fill="#EF4444" 
+                        fillOpacity={0.6}
+                        name="Vulnerabilities"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-muted-foreground">
+                  No vulnerability trends data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Recent Vulnerabilities */}
         <Card className="mb-8">

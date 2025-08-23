@@ -169,6 +169,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced dashboard analytics
+  app.get("/api/dashboard/language-stats", async (req, res) => {
+    try {
+      const stats = await storage.getRepositoryLanguageStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch language stats" });
+    }
+  });
+
+  app.get("/api/dashboard/crypto-assets", async (req, res) => {
+    try {
+      const stats = await storage.getCryptoAssetStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch crypto asset stats" });
+    }
+  });
+
+  app.get("/api/dashboard/crypto-libraries", async (req, res) => {
+    try {
+      const stats = await storage.getCryptoLibrariesStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch crypto libraries stats" });
+    }
+  });
+
+  app.get("/api/dashboard/vulnerability-trends", async (req, res) => {
+    try {
+      const stats = await storage.getVulnerabilityTrends();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch vulnerability trends" });
+    }
+  });
+
+  app.get("/api/dashboard/detailed-stats", async (req, res) => {
+    try {
+      const stats = await storage.getDetailedStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch detailed stats" });
+    }
+  });
+
   // CBOM Reports
   app.get("/api/cbom/:repositoryId", async (req, res) => {
     try {

@@ -65,6 +65,18 @@ export interface IStorage {
     pqcCompliant: number;
     activeScans: number;
   }>;
+
+  // Enhanced dashboard analytics
+  getRepositoryLanguageStats(): Promise<Array<{language: string; count: number}>>;
+  getCryptoAssetStats(): Promise<Array<{assetType: string; count: number}>>;
+  getCryptoLibrariesStats(): Promise<Array<{library: string; count: number}>>;
+  getVulnerabilityTrends(): Promise<Array<{date: string; count: number; severity: string}>>;
+  getDetailedStats(): Promise<{
+    totalRepositories: number;
+    totalScanned: number;
+    totalVulnerabilities: number;
+    lastScanDate: string | null;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -430,6 +442,158 @@ export class DatabaseStorage implements IStorage {
       quantumVulnerable: quantumVulnerableCount?.count || 0,
       pqcCompliant: pqcCompliantCount?.count || 0,
       activeScans: activeScansCount?.count || 0,
+    };
+  }
+
+  async getRepositoryLanguageStats(): Promise<Array<{language: string; count: number}>> {
+    const repos = await db.select().from(repositories);
+    const languageCount: {[key: string]: number} = {};
+    
+    repos.forEach(repo => {
+      const languages = Array.isArray(repo.languages) ? repo.languages : [];
+      languages.forEach(lang => {
+        languageCount[lang] = (languageCount[lang] || 0) + 1;
+      });
+    });
+    
+    return Object.entries(languageCount).map(([language, count]) => ({
+      language: language.charAt(0).toUpperCase() + language.slice(1),
+      count
+    }));
+  }
+
+  async getCryptoAssetStats(): Promise<Array<{assetType: string; count: number}>> {
+    const vulnRecords = await db.select().from(vulnerabilities);
+    const assetTypes: {[key: string]: number} = {};
+    
+    vulnRecords.forEach(vuln => {
+      if (vuln.metadata && typeof vuln.metadata === 'object') {
+        const metadata = vuln.metadata as any;
+        const algorithm = metadata.algorithm;
+        if (algorithm) {
+          let assetType = 'Other';
+          if (algorithm.toLowerCase().includes('rsa') || algorithm.toLowerCase().includes('private')) {
+            assetType = 'Private Key';
+          } else if (algorithm.toLowerCase().includes('sha256') || algorithm.toLowerCase().includes('sha-256')) {
+            assetType = 'SHA256';
+          } else if (algorithm.toLowerCase().includes('x25519')) {
+            assetType = 'X25519';
+          } else if (algorithm.toLowerCase().includes('ed25519') || algorithm.toLowerCase().includes('eddsa')) {
+            assetType = 'ED25519';
+          } else if (algorithm.toLowerCase().includes('aes')) {
+            assetType = 'AES';
+          } else if (algorithm.toLowerCase().includes('ecdsa')) {
+            assetType = 'ECDSA';
+          }
+          assetTypes[assetType] = (assetTypes[assetType] || 0) + 1;
+        }
+      }
+    });
+    
+    return Object.entries(assetTypes).map(([assetType, count]) => ({
+      assetType,
+      count
+    }));
+  }
+
+  async getCryptoLibrariesStats(): Promise<Array<{library: string; count: number}>> {
+    const vulnRecords = await db.select().from(vulnerabilities);
+    const libraries: {[key: string]: number} = {};
+    
+    vulnRecords.forEach(vuln => {
+      if (vuln.metadata && typeof vuln.metadata === 'object') {
+        const metadata = vuln.metadata as any;
+        const library = metadata.library;
+        if (library) {
+          const libName = library.toLowerCase();
+          let displayName = library;
+          
+          if (libName.includes('bouncy')) displayName = 'Bouncy Castle';
+          else if (libName.includes('openssl')) displayName = 'OpenSSL';
+          else if (libName.includes('crypto')) displayName = 'Node Crypto';
+          else if (libName.includes('pycrypto')) displayName = 'PyCrypto';
+          else if (libName.includes('javax.crypto')) displayName = 'Java Crypto';
+          else if (libName.includes('cryptojs')) displayName = 'CryptoJS';
+          
+          libraries[displayName] = (libraries[displayName] || 0) + 1;
+        }
+      }
+    });
+    
+    return Object.entries(libraries).map(([library, count]) => ({
+      library,
+      count
+    }));
+  }
+
+  async getVulnerabilityTrends(): Promise<Array<{date: string; count: number; severity: string}>> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const vulnRecords = await db
+      .select({
+        createdAt: vulnerabilities.createdAt,
+        severity: vulnerabilities.severity
+      })
+      .from(vulnerabilities)
+      .where(sql`${vulnerabilities.createdAt} >= ${thirtyDaysAgo.toISOString()}`);
+    
+    const dateMap: {[key: string]: {[severity: string]: number}} = {};
+    
+    // Initialize with zeros for the last 30 days
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dateMap[dateStr] = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    }
+    
+    // Count vulnerabilities by date and severity
+    vulnRecords.forEach(vuln => {
+      const dateStr = vuln.createdAt.toISOString().split('T')[0];
+      if (dateMap[dateStr]) {
+        dateMap[dateStr][vuln.severity] = (dateMap[dateStr][vuln.severity] || 0) + 1;
+      }
+    });
+    
+    // Convert to array format for charts
+    const result: Array<{date: string; count: number; severity: string}> = [];
+    Object.entries(dateMap).forEach(([date, severities]) => {
+      Object.entries(severities).forEach(([severity, count]) => {
+        result.push({ date, severity, count });
+      });
+    });
+    
+    return result;
+  }
+
+  async getDetailedStats(): Promise<{
+    totalRepositories: number;
+    totalScanned: number;
+    totalVulnerabilities: number;
+    lastScanDate: string | null;
+  }> {
+    const [repoCount] = await db.select({ count: sql<number>`count(*)` }).from(repositories);
+    
+    const [scannedCount] = await db
+      .select({ count: sql<number>`count(distinct repository_id)` })
+      .from(scans)
+      .where(eq(scans.status, 'completed'));
+    
+    const [vulnCount] = await db.select({ count: sql<number>`count(*)` }).from(vulnerabilities);
+    
+    const [lastScan] = await db
+      .select({ completedAt: scans.completedAt })
+      .from(scans)
+      .where(eq(scans.status, 'completed'))
+      .orderBy(desc(scans.completedAt))
+      .limit(1);
+    
+    return {
+      totalRepositories: repoCount?.count || 0,
+      totalScanned: scannedCount?.count || 0,
+      totalVulnerabilities: vulnCount?.count || 0,
+      lastScanDate: lastScan?.completedAt?.toISOString() || null,
     };
   }
 }
