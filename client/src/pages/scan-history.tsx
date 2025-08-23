@@ -276,9 +276,27 @@ export default function ScanHistory() {
                                 </div>
                               </div>
                             )}
+                            {/* Debug info for pending scans */}
+                            {scan.status === "pending" && (
+                              <div className="text-xs text-amber-600 mt-1">
+                                Queued - ID: {scan.id.slice(0, 8)}...
+                              </div>
+                            )}
+                            {/* Show detailed error info */}
                             {scan.errorMessage && (
                               <div className="text-xs text-red-600 mt-1" data-testid={`text-error-${scan.id}`}>
-                                {scan.errorMessage}
+                                Error: {scan.errorMessage}
+                              </div>
+                            )}
+                            {scan.error && (
+                              <div className="text-xs text-red-600 mt-1">
+                                {scan.error}
+                              </div>
+                            )}
+                            {/* Show start time for debugging */}
+                            {scan.startedAt && scan.status === "scanning" && (
+                              <div className="text-xs text-blue-600 mt-1">
+                                Running for {formatDuration(scan.startedAt)}
                               </div>
                             )}
                           </TableCell>

@@ -4,6 +4,10 @@ import { storage } from "../storage";
 import path from "path";
 import fs from "fs/promises";
 import { nanoid } from "nanoid";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const execAsync = promisify(exec);
 
@@ -61,26 +65,19 @@ class AsyncScannerService {
     this.processJobs();
   }
 
-  async createScanJob(repositoryId: string, config: ScanConfig): Promise<string> {
-    const jobId = nanoid();
+  async createScanJob(scanId: string, repositoryId: string, config: ScanConfig): Promise<string> {
     const job: ScanJob = {
-      id: jobId,
+      id: scanId, // Use the database scan ID instead of generating a new one
       repositoryId,
       status: "pending",
       progress: 0,
       config,
     };
 
-    this.jobQueue.set(jobId, job);
+    this.jobQueue.set(scanId, job);
+    console.log(`Created scan job ${scanId} for repository ${repositoryId}`);
     
-    // Create scan record in database
-    await storage.createScan({
-      repositoryId,
-      status: "pending",
-      scanConfig: config,
-    });
-
-    return jobId;
+    return scanId;
   }
 
   async getScanJob(jobId: string): Promise<ScanJob | undefined> {
@@ -110,6 +107,8 @@ class AsyncScannerService {
 
   private async executeJob(job: ScanJob) {
     try {
+      console.log(`Starting execution of scan job ${job.id}`);
+      
       // Mark job as running
       job.status = "running";
       job.startedAt = new Date();
@@ -117,10 +116,9 @@ class AsyncScannerService {
       this.activeJobs.add(job.id);
 
       // Update database
-      await storage.updateScan(job.id, {
-        status: "running",
-        progress: 0,
-      });
+      await storage.updateScanStatus(job.id, "scanning", 0);
+      
+      console.log(`Updated scan ${job.id} status to scanning`);
 
       // Get repository info
       const repository = await storage.getRepository(job.repositoryId);
@@ -134,10 +132,12 @@ class AsyncScannerService {
 
       // Run semgrep scan
       job.progress = 30;
+      await storage.updateScanStatus(job.id, "scanning", 30);
       const scanResult = await this.runSemgrepScan(tempDir, job.config);
 
       // Process results and create vulnerabilities
       job.progress = 80;
+      await storage.updateScanStatus(job.id, "scanning", 80);
       await this.processResults(job.repositoryId, job.id, scanResult);
 
       // Mark job as completed
@@ -145,11 +145,9 @@ class AsyncScannerService {
       job.progress = 100;
       job.completedAt = new Date();
 
-      await storage.updateScan(job.id, {
-        status: "completed",
-        progress: 100,
-        completedAt: new Date(),
-      });
+      await storage.updateScanStatus(job.id, "completed", 100);
+      
+      console.log(`Scan ${job.id} completed successfully`);
 
       // Cleanup temp directory
       await this.cleanup(tempDir);
@@ -159,11 +157,7 @@ class AsyncScannerService {
       job.error = error instanceof Error ? error.message : "Unknown error";
       job.completedAt = new Date();
 
-      await storage.updateScan(job.id, {
-        status: "failed",
-        error: job.error,
-        completedAt: new Date(),
-      });
+      await storage.updateScanStatus(job.id, "failed", 0, job.error);
 
       console.error(`Scan job ${job.id} failed:`, error);
     } finally {

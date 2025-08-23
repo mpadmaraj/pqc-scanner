@@ -158,6 +158,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint for job queue status
+  app.get("/api/debug/scan-jobs", async (req, res) => {
+    try {
+      const jobs = await scannerService.getActiveJobs();
+      res.json(jobs);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch job queue status" });
+    }
+  });
+
   // Vulnerabilities
   app.get("/api/vulnerabilities", async (req, res) => {
     try {

@@ -30,7 +30,7 @@ class ScannerService {
       timeout: config?.timeout || 300000, // 5 minutes
     };
 
-    const jobId = await asyncScannerService.createScanJob(repositoryId, scanConfig);
+    const jobId = await asyncScannerService.createScanJob(scanId, repositoryId, scanConfig);
     return jobId;
   }
 
@@ -51,6 +51,10 @@ class ScannerService {
       completedAt: job.completedAt,
       error: job.error,
     };
+  }
+
+  async getActiveJobs() {
+    return await asyncScannerService.getAllJobs();
   }
 
   async startScanLegacy(scanId: string, repositoryId: string, config?: any) {
