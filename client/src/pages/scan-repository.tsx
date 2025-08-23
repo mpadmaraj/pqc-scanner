@@ -26,8 +26,8 @@ export default function ScanRepository() {
   
   // Table State
   const [searchTerm, setSearchTerm] = useState("");
-  const [languageFilter, setLanguageFilter] = useState<string>("");
-  const [vulnerabilityFilter, setVulnerabilityFilter] = useState<string>("");
+  const [languageFilter, setLanguageFilter] = useState<string>("all");
+  const [vulnerabilityFilter, setVulnerabilityFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("lastScanAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -168,11 +168,11 @@ export default function ScanRepository() {
         (repo.description && repo.description.toLowerCase().includes(searchTerm.toLowerCase()));
       
       // Language filter
-      const languageMatch = !languageFilter ||
+      const languageMatch = languageFilter === "all" ||
         (repo.languages && repo.languages.includes(languageFilter));
       
       // Vulnerability filter
-      const vulnerabilityMatch = !vulnerabilityFilter ||
+      const vulnerabilityMatch = vulnerabilityFilter === "all" ||
         (repo.vulnerabilities && repo.vulnerabilities[vulnerabilityFilter] > 0);
       
       return searchMatch && languageMatch && vulnerabilityMatch;
@@ -465,7 +465,7 @@ export default function ScanRepository() {
                     <SelectValue placeholder="Language" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Languages</SelectItem>
+                    <SelectItem value="all">All Languages</SelectItem>
                     {availableLanguages.map((lang) => (
                       <SelectItem key={lang} value={lang}>
                         {lang.charAt(0).toUpperCase() + lang.slice(1)}
@@ -479,7 +479,7 @@ export default function ScanRepository() {
                     <SelectValue placeholder="Severity" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Severity</SelectItem>
+                    <SelectItem value="all">All Severity</SelectItem>
                     {vulnerabilityTypes.map((type) => (
                       <SelectItem key={type} value={type}>
                         {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -503,15 +503,15 @@ export default function ScanRepository() {
           <CardContent>
             {paginatedRepositories.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                {searchTerm || languageFilter || vulnerabilityFilter ? (
+                {searchTerm || languageFilter !== "all" || vulnerabilityFilter !== "all" ? (
                   <>
                     <p>No repositories match your filters</p>
                     <Button
                       variant="outline"
                       onClick={() => {
                         setSearchTerm("");
-                        setLanguageFilter("");
-                        setVulnerabilityFilter("");
+                        setLanguageFilter("all");
+                        setVulnerabilityFilter("all");
                       }}
                       className="mt-2"
                     >
