@@ -140,6 +140,11 @@ class AsyncScannerService {
       await storage.updateScanStatus(job.id, "scanning", 80);
       await this.processResults(job.repositoryId, job.id, scanResult);
 
+      // Generate CBOM report
+      job.progress = 95;
+      await storage.updateScanStatus(job.id, "scanning", 95);
+      await this.generateCBOMReport(job.repositoryId, job.id, scanResult);
+
       // Mark job as completed
       job.status = "completed";
       job.progress = 100;
@@ -295,6 +300,222 @@ class AsyncScannerService {
     }
   }
 
+  private async generateCBOMReport(repositoryId: string, scanId: string, scanResult: ScanResult) {
+    const repository = await storage.getRepository(repositoryId);
+    if (!repository) return;
+
+    // Extract cryptographic assets from findings
+    const cryptoAssets = this.extractCryptoAssets(scanResult.findings);
+    
+    // Analyze quantum safety compliance
+    const compliance = this.analyzeQuantumSafety(cryptoAssets);
+    
+    // Generate CBOM data structure
+    const cbomReport = {
+      repository: {
+        name: repository.name,
+        url: repository.url,
+        provider: repository.provider,
+      },
+      scanId: scanId,
+      timestamp: new Date().toISOString(),
+      summary: {
+        totalAssets: cryptoAssets.length,
+        quantumSafe: cryptoAssets.filter(a => a.quantumSafe).length,
+        quantumVulnerable: cryptoAssets.filter(a => !a.quantumSafe && a.quantumSafe !== null).length,
+        unknown: cryptoAssets.filter(a => a.quantumSafe === null).length,
+      },
+      compliance: compliance,
+      assets: cryptoAssets,
+      primitives: this.categorizePrimitives(cryptoAssets),
+      recommendations: this.generateRecommendations(cryptoAssets, compliance),
+    };
+
+    // Store the CBOM report
+    await storage.createCbomReport({
+      repositoryId,
+      scanId,
+      content: cbomReport,
+    });
+
+    console.log(`Generated CBOM report for scan ${scanId} with ${cryptoAssets.length} crypto assets`);
+  }
+
+  private extractCryptoAssets(findings: Finding[]): CryptoAsset[] {
+    const assets: CryptoAsset[] = [];
+    const assetMap = new Map<string, CryptoAsset>();
+
+    findings.forEach(finding => {
+      const algorithm = this.extractAlgorithmFromFinding(finding);
+      if (algorithm) {
+        const key = `${algorithm}-${finding.file}-${finding.line}`;
+        
+        if (!assetMap.has(key)) {
+          const asset: CryptoAsset = {
+            name: algorithm,
+            type: this.determineAssetType(algorithm, finding),
+            primitive: this.determinePrimitive(algorithm, finding),
+            location: `${finding.file}:${finding.line}`,
+            quantumSafe: this.isQuantumSafe(algorithm),
+            severity: finding.severity,
+            description: finding.message,
+            recommendation: this.getAlgorithmRecommendation(algorithm),
+          };
+          assetMap.set(key, asset);
+          assets.push(asset);
+        }
+      }
+    });
+
+    return assets;
+  }
+
+  private extractAlgorithmFromFinding(finding: Finding): string | null {
+    // Extract algorithm names from the finding
+    const message = finding.message.toLowerCase();
+    const code = finding.code.toLowerCase();
+    
+    // Common crypto algorithms
+    const algorithms = [
+      'rsa', 'ecdsa', 'ecdh', 'dsa', 'dh',
+      'aes', 'des', '3des', 'blowfish', 'rc4',
+      'sha1', 'sha256', 'sha512', 'md5', 'sha3',
+      'kyber', 'dilithium', 'sphincs', 'falcon',
+      'x25519', 'x448', 'ed25519', 'ed448',
+      'shake128', 'shake256', 'blake2',
+    ];
+
+    for (const algo of algorithms) {
+      if (message.includes(algo) || code.includes(algo)) {
+        return algo.toUpperCase();
+      }
+    }
+
+    // Extract from rule ID
+    if (finding.ruleId.includes('crypto') || finding.ruleId.includes('hash')) {
+      const match = finding.ruleId.match(/([a-zA-Z0-9]+)$/);
+      if (match) return match[1].toUpperCase();
+    }
+
+    return null;
+  }
+
+  private determineAssetType(algorithm: string, finding: Finding): string {
+    if (finding.code.includes('private') || finding.code.includes('key')) {
+      return 'Related Crypto Material';
+    }
+    return 'Algorithm';
+  }
+
+  private determinePrimitive(algorithm: string, finding: Finding): string {
+    const algo = algorithm.toLowerCase();
+    
+    if (['rsa', 'ecdsa', 'dsa', 'ed25519', 'ed448', 'dilithium', 'falcon', 'sphincs'].includes(algo)) {
+      return 'Digital Signature';
+    }
+    if (['ecdh', 'dh', 'x25519', 'x448', 'kyber'].includes(algo)) {
+      return 'Key Agreement';
+    }
+    if (['sha1', 'sha256', 'sha512', 'md5', 'sha3', 'blake2'].includes(algo)) {
+      return 'Hash Function';
+    }
+    if (['shake128', 'shake256'].includes(algo)) {
+      return 'Extendable Output Function';
+    }
+    if (['aes', 'des', '3des', 'blowfish', 'rc4'].includes(algo)) {
+      return 'Symmetric Encryption';
+    }
+    
+    return 'Unspecified';
+  }
+
+  private isQuantumSafe(algorithm: string): boolean | null {
+    const algo = algorithm.toLowerCase();
+    
+    // Quantum-safe algorithms
+    const quantumSafe = ['kyber', 'dilithium', 'sphincs', 'falcon', 'sha3', 'shake128', 'shake256', 'blake2'];
+    if (quantumSafe.some(safe => algo.includes(safe))) return true;
+    
+    // Quantum-vulnerable algorithms
+    const quantumVulnerable = ['rsa', 'ecdsa', 'ecdh', 'dsa', 'dh'];
+    if (quantumVulnerable.some(vuln => algo.includes(vuln))) return false;
+    
+    // Symmetric algorithms (larger key sizes are quantum-resistant)
+    if (['aes'].includes(algo)) return true; // Assuming AES-256
+    
+    return null; // Unknown
+  }
+
+  private analyzeQuantumSafety(assets: CryptoAsset[]): ComplianceStatus {
+    const total = assets.length;
+    const quantumSafe = assets.filter(a => a.quantumSafe === true).length;
+    const quantumVulnerable = assets.filter(a => a.quantumSafe === false).length;
+    
+    const compliance = total > 0 ? (quantumSafe / total) * 100 : 0;
+    
+    return {
+      status: compliance >= 100 ? 'compliant' : compliance >= 80 ? 'partial' : 'not_compliant',
+      score: Math.round(compliance),
+      policy: 'quantum_safe',
+      details: `${quantumSafe}/${total} assets are quantum-safe`,
+      recommendations: quantumVulnerable > 0 ? 
+        [`Migrate ${quantumVulnerable} quantum-vulnerable algorithms to post-quantum alternatives`] : []
+    };
+  }
+
+  private categorizePrimitives(assets: CryptoAsset[]): PrimitiveCategory[] {
+    const primitiveCount = new Map<string, number>();
+    
+    assets.forEach(asset => {
+      const current = primitiveCount.get(asset.primitive) || 0;
+      primitiveCount.set(asset.primitive, current + 1);
+    });
+
+    return Array.from(primitiveCount.entries()).map(([name, count]) => ({
+      name,
+      count,
+      percentage: assets.length > 0 ? Math.round((count / assets.length) * 100) : 0
+    }));
+  }
+
+  private generateRecommendations(assets: CryptoAsset[], compliance: ComplianceStatus): string[] {
+    const recommendations: string[] = [];
+    
+    if (compliance.status !== 'compliant') {
+      recommendations.push('Migrate to NIST-approved post-quantum cryptography standards');
+    }
+    
+    const vulnerableAlgorithms = assets.filter(a => a.quantumSafe === false);
+    if (vulnerableAlgorithms.length > 0) {
+      const algos = [...new Set(vulnerableAlgorithms.map(a => a.name))];
+      recommendations.push(`Replace quantum-vulnerable algorithms: ${algos.join(', ')}`);
+    }
+    
+    const hasRSA = assets.some(a => a.name.includes('RSA'));
+    if (hasRSA) {
+      recommendations.push('Replace RSA with ML-KEM (CRYSTALS-KYBER) for key encapsulation');
+    }
+    
+    const hasECDSA = assets.some(a => a.name.includes('ECDSA'));
+    if (hasECDSA) {
+      recommendations.push('Replace ECDSA with ML-DSA (CRYSTALS-Dilithium) for digital signatures');
+    }
+
+    return recommendations;
+  }
+
+  private getAlgorithmRecommendation(algorithm: string): string {
+    const algo = algorithm.toLowerCase();
+    
+    if (algo.includes('rsa')) return 'Migrate to ML-KEM (CRYSTALS-KYBER)';
+    if (algo.includes('ecdsa')) return 'Migrate to ML-DSA (CRYSTALS-Dilithium)';
+    if (algo.includes('ecdh')) return 'Migrate to ML-KEM (CRYSTALS-KYBER)';
+    if (algo.includes('sha1') || algo.includes('md5')) return 'Upgrade to SHA-3 or BLAKE2';
+    if (algo.includes('des')) return 'Upgrade to AES-256';
+    
+    return 'Review for quantum-safety compliance';
+  }
+
   private async cleanup(directory: string) {
     try {
       await execAsync(`rm -rf "${directory}"`);
@@ -302,6 +523,31 @@ class AsyncScannerService {
       console.warn(`Failed to cleanup directory ${directory}:`, error);
     }
   }
+}
+
+interface CryptoAsset {
+  name: string;
+  type: string;
+  primitive: string;
+  location: string;
+  quantumSafe: boolean | null;
+  severity: string;
+  description: string;
+  recommendation: string;
+}
+
+interface ComplianceStatus {
+  status: 'compliant' | 'partial' | 'not_compliant';
+  score: number;
+  policy: string;
+  details: string;
+  recommendations: string[];
+}
+
+interface PrimitiveCategory {
+  name: string;
+  count: number;
+  percentage: number;
 }
 
 export const asyncScannerService = new AsyncScannerService();

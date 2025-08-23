@@ -48,6 +48,9 @@ export interface IStorage {
   // CBOM operations
   getCbomReport(repositoryId: string): Promise<CbomReport | undefined>;
   createCbomReport(cbom: InsertCbomReport): Promise<CbomReport>;
+  getCBOMReportByScan(scanId: string): Promise<CbomReport | undefined>;
+  getCBOMReports(filters?: { repositoryId?: string }): Promise<CbomReport[]>;
+  createCBOMReport(cbomReport: InsertCbomReport): Promise<CbomReport>;
 
   // VDR operations
   getVdrReport(vulnerabilityId: string): Promise<VdrReport | undefined>;
@@ -351,6 +354,30 @@ export class DatabaseStorage implements IStorage {
       .values([safeCbom])
       .returning();
     return created;
+  }
+
+  async getCBOMReportByScan(scanId: string): Promise<CbomReport | undefined> {
+    const [cbom] = await db
+      .select()
+      .from(cbomReports)
+      .where(eq(cbomReports.scanId, scanId))
+      .orderBy(desc(cbomReports.createdAt))
+      .limit(1);
+    return cbom || undefined;
+  }
+
+  async getCBOMReports(filters?: { repositoryId?: string }): Promise<CbomReport[]> {
+    let query = db.select().from(cbomReports);
+    
+    if (filters?.repositoryId) {
+      query = query.where(eq(cbomReports.repositoryId, filters.repositoryId));
+    }
+    
+    return await query.orderBy(desc(cbomReports.createdAt));
+  }
+
+  async createCBOMReport(cbomReport: InsertCbomReport): Promise<CbomReport> {
+    return await this.createCbomReport(cbomReport);
   }
 
   // VDR operations

@@ -168,6 +168,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CBOM Reports
+  app.get("/api/cbom-reports/:scanId", async (req, res) => {
+    try {
+      const cbomReport = await storage.getCBOMReportByScan(req.params.scanId);
+      if (!cbomReport) {
+        return res.status(404).json({ error: "CBOM report not found" });
+      }
+      res.json(cbomReport);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch CBOM report" });
+    }
+  });
+
+  app.get("/api/cbom-reports", async (req, res) => {
+    try {
+      const { repositoryId } = req.query;
+      const cbomReports = await storage.getCBOMReports({ 
+        repositoryId: repositoryId as string 
+      });
+      res.json(cbomReports);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch CBOM reports" });
+    }
+  });
+
   // Vulnerabilities
   app.get("/api/vulnerabilities", async (req, res) => {
     try {

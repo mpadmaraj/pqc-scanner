@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, User, Zap } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, User, Zap, FileText } from "lucide-react";
 import VulnerabilityTable from "@/components/vulnerability-table";
+import CBOMReportView from "@/components/cbom-report-view";
 
 export default function ScanHistory() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,6 +39,11 @@ export default function ScanHistory() {
 
   const { data: scanVulnerabilities = [] } = useQuery<Vulnerability[]>({
     queryKey: ["/api/vulnerabilities", selectedScan],
+    enabled: !!selectedScan,
+  });
+
+  const { data: cbomReport } = useQuery({
+    queryKey: ["/api/cbom-reports", selectedScan],
     enabled: !!selectedScan,
   });
 
@@ -381,23 +388,46 @@ export default function ScanHistory() {
                             </TooltipProvider>
                           </TableCell>
                         </TableRow>
-                        {/* Vulnerability Details Row */}
-                        {selectedScan === scan.id && scanVulnerabilities && (
+                        {/* Scan Details Row */}
+                        {selectedScan === scan.id && (
                           <TableRow key={`${scan.id}-details`}>
                             <TableCell colSpan={6} className="p-0">
                               <div className="bg-gray-50 p-4 border-t border-gray-200">
-                                <div className="mb-3">
-                                  <h4 className="font-medium text-sm">
-                                    Vulnerabilities - {getRepositoryName(scan.repositoryId)}
+                                <div className="mb-4">
+                                  <h4 className="font-medium text-sm mb-2">
+                                    Scan Results - {getRepositoryName(scan.repositoryId)}
                                   </h4>
-                                  <p className="text-xs text-muted-foreground">
-                                    {scanVulnerabilities.length} vulnerabilities found in this scan
-                                  </p>
                                 </div>
-                                <VulnerabilityTable 
-                                  vulnerabilities={scanVulnerabilities} 
-                                  showRepository={false}
-                                />
+                                <Tabs defaultValue="vulnerabilities" className="w-full">
+                                  <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="vulnerabilities" className="flex items-center gap-2">
+                                      <AlertTriangle className="h-4 w-4" />
+                                      Vulnerabilities ({scanVulnerabilities.length})
+                                    </TabsTrigger>
+                                    <TabsTrigger value="cbom" className="flex items-center gap-2">
+                                      <FileText className="h-4 w-4" />
+                                      CBOM Report
+                                    </TabsTrigger>
+                                  </TabsList>
+                                  <TabsContent value="vulnerabilities" className="mt-4">
+                                    <div className="mb-3">
+                                      <p className="text-xs text-muted-foreground">
+                                        {scanVulnerabilities.length} vulnerabilities found in this scan
+                                      </p>
+                                    </div>
+                                    <VulnerabilityTable 
+                                      vulnerabilities={scanVulnerabilities} 
+                                      showRepository={false}
+                                    />
+                                  </TabsContent>
+                                  <TabsContent value="cbom" className="mt-4">
+                                    <CBOMReportView 
+                                      scanId={scan.id}
+                                      repositoryName={getRepositoryName(scan.repositoryId)}
+                                      reportData={cbomReport}
+                                    />
+                                  </TabsContent>
+                                </Tabs>
                               </div>
                             </TableCell>
                           </TableRow>
