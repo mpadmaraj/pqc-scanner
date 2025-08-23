@@ -125,10 +125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       const scan = await storage.createScan(scanData);
       
-      // Start scanning process in background
-      scannerService.startScan(scan.id, scan.repositoryId, data.scanConfig);
+      // Start scanning process in background using async scanner
+      const jobId = await scannerService.startScan(scan.id, scan.repositoryId, data.scanConfig);
       
-      res.json(scan);
+      res.json({ ...scan, jobId });
     } catch (error) {
       res.status(400).json({ error: "Invalid scan data" });
     }

@@ -1,0 +1,96 @@
+<rules>
+  <!-- ========== JAVA RULES ========== -->
+  <rule id="java-bouncycastle-rsa" severity="ERROR" languages="java">
+    <pattern>Cipher.getInstance("RSA")</pattern>
+    <message>RSA is not PQC safe. Consider PQC alternatives (e.g., Kyber).</message>
+  </rule>
+
+  <rule id="java-bouncycastle-ec" severity="ERROR" languages="java">
+    <pattern>KeyPairGenerator.getInstance("EC")</pattern>
+    <message>Elliptic Curve crypto (EC/ECDSA/ECDH) is not PQC safe.</message>
+  </rule>
+
+  <rule id="java-md5-sha1" severity="ERROR" languages="java">
+    <pattern>MessageDigest.getInstance("MD5")</pattern>
+    <message>MD5 is insecure. Use SHA-2 or SHA-3 family.</message>
+  </rule>
+  <rule id="java-sha1" severity="ERROR" languages="java">
+    <pattern>MessageDigest.getInstance("SHA-1")</pattern>
+    <message>SHA-1 is weak. Use SHA-256 or SHA-3 instead.</message>
+  </rule>
+
+  <rule id="java-des" severity="ERROR" languages="java">
+    <pattern>Cipher.getInstance("DES")</pattern>
+    <message>DES is insecure. Use AES-256 or PQC symmetric alternatives.</message>
+  </rule>
+  <rule id="java-3des" severity="ERROR" languages="java">
+    <pattern>Cipher.getInstance("DESede")</pattern>
+    <message>3DES is deprecated. Use AES-256 or PQC-safe alternatives.</message>
+  </rule>
+  <rule id="java-aes128" severity="WARNING" languages="java">
+    <pattern>Cipher.getInstance("AES")</pattern>
+    <message>AES-128 may be weak against PQC. Prefer AES-256.</message>
+  </rule>
+
+  <!-- ========== PYTHON RULES ========== -->
+  <rule id="python-rsa" severity="ERROR" languages="python">
+    <pattern>Crypto.PublicKey.RSA</pattern>
+    <message>RSA detected in PyCryptodome. Not PQC safe.</message>
+  </rule>
+
+  <rule id="python-ecc" severity="ERROR" languages="python">
+    <pattern>Crypto.PublicKey.ECC</pattern>
+    <message>ECC detected. Not PQC safe.</message>
+  </rule>
+
+  <rule id="python-md5" severity="ERROR" languages="python">
+    <pattern>hashlib.md5</pattern>
+    <message>MD5 is insecure. Use SHA-256 or SHA-3.</message>
+  </rule>
+  <rule id="python-sha1" severity="ERROR" languages="python">
+    <pattern>hashlib.sha1</pattern>
+    <message>SHA-1 is weak. Use SHA-256 or SHA-3.</message>
+  </rule>
+
+  <rule id="python-des" severity="ERROR" languages="python">
+    <pattern>Crypto.Cipher.DES</pattern>
+    <message>DES cipher detected. Use AES-256.</message>
+  </rule>
+  <rule id="python-3des" severity="ERROR" languages="python">
+    <pattern>Crypto.Cipher.DES3</pattern>
+    <message>3DES cipher detected. Use AES-256.</message>
+  </rule>
+  <rule id="python-aes128" severity="WARNING" languages="python">
+    <pattern>Crypto.Cipher.AES</pattern>
+    <message>AES-128 may be weak. Use AES-256.</message>
+  </rule>
+
+  <!-- ========== JAVASCRIPT / TYPESCRIPT RULES ========== -->
+  <rule id="js-rsa" severity="ERROR" languages="javascript,typescript">
+    <pattern>crypto.createSign("RSA-")</pattern>
+    <message>RSA detected in Node.js. Not PQC safe.</message>
+  </rule>
+
+  <rule id="js-ecdh" severity="ERROR" languages="javascript,typescript">
+    <pattern>crypto.createECDH</pattern>
+    <message>Elliptic Curve Diffie-Hellman detected. Not PQC safe.</message>
+  </rule>
+
+  <rule id="js-md5" severity="ERROR" languages="javascript,typescript">
+    <pattern>crypto.createHash("md5")</pattern>
+    <message>MD5 is insecure. Use SHA-256/512.</message>
+  </rule>
+  <rule id="js-sha1" severity="ERROR" languages="javascript,typescript">
+    <pattern>crypto.createHash("sha1")</pattern>
+    <message>SHA-1 is weak. Use SHA-256/512.</message>
+  </rule>
+
+  <rule id="js-des" severity="ERROR" languages="javascript,typescript">
+    <pattern>crypto.createCipheriv("des-")</pattern>
+    <message>DES/3DES detected. Use AES-256.</message>
+  </rule>
+  <rule id="js-aes128" severity="WARNING" languages="javascript,typescript">
+    <pattern>crypto.createCipheriv("aes-128-")</pattern>
+    <message>AES-128 may be weak. Use AES-256.</message>
+  </rule>
+</rules>

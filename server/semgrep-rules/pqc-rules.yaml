@@ -1,0 +1,260 @@
+rules:
+  # ========== JAVA RULES ==========
+  - id: java-rsa-cipher
+    languages: [java]
+    severity: ERROR
+    message: RSA is not post-quantum safe. Consider PQC alternatives like Kyber for key exchange.
+    pattern: Cipher.getInstance("RSA")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [java]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+      references:
+        - "https://csrc.nist.gov/Projects/post-quantum-cryptography"
+
+  - id: java-ec-keypair
+    languages: [java]
+    severity: ERROR
+    message: Elliptic Curve cryptography (EC/ECDSA/ECDH) is vulnerable to quantum attacks.
+    pattern: KeyPairGenerator.getInstance("EC")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [java]
+
+  - id: java-ecdsa-keypair
+    languages: [java]
+    severity: ERROR
+    message: ECDSA is vulnerable to quantum attacks. Consider post-quantum signature schemes.
+    pattern: KeyPairGenerator.getInstance("ECDSA")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [java]
+
+  - id: java-md5-hash
+    languages: [java]
+    severity: ERROR
+    message: MD5 is cryptographically broken. Use SHA-256, SHA-3, or BLAKE2.
+    pattern: MessageDigest.getInstance("MD5")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [java]
+
+  - id: java-sha1-hash
+    languages: [java]
+    severity: ERROR
+    message: SHA-1 is weak and deprecated. Use SHA-256, SHA-3, or BLAKE2.
+    pattern: MessageDigest.getInstance("SHA-1")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [java]
+
+  - id: java-des-cipher
+    languages: [java]
+    severity: ERROR
+    message: DES is insecure with only 56-bit keys. Use AES-256 or post-quantum symmetric encryption.
+    pattern: Cipher.getInstance("DES")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [java]
+
+  - id: java-3des-cipher
+    languages: [java]
+    severity: ERROR
+    message: 3DES is deprecated and slow. Use AES-256 or post-quantum symmetric alternatives.
+    pattern: Cipher.getInstance("DESede")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [java]
+
+  - id: java-aes-128-warning
+    languages: [java]
+    severity: WARNING
+    message: AES-128 may provide insufficient security against quantum attacks. Consider AES-256.
+    patterns:
+      - pattern: Cipher.getInstance("AES")
+      - pattern: Cipher.getInstance("AES/ECB/PKCS5Padding")
+      - pattern: Cipher.getInstance("AES/CBC/PKCS5Padding")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [java]
+
+  # ========== PYTHON RULES ==========
+  - id: python-rsa-pycrypto
+    languages: [python]
+    severity: ERROR
+    message: RSA detected in PyCryptodome/PyCrypto. Not post-quantum safe.
+    patterns:
+      - pattern: from Crypto.PublicKey import RSA
+      - pattern: Crypto.PublicKey.RSA
+      - pattern: from cryptography.hazmat.primitives.asymmetric import rsa
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [python]
+
+  - id: python-ecc-crypto
+    languages: [python]
+    severity: ERROR
+    message: Elliptic Curve cryptography detected. Vulnerable to quantum attacks.
+    patterns:
+      - pattern: from Crypto.PublicKey import ECC
+      - pattern: Crypto.PublicKey.ECC
+      - pattern: from cryptography.hazmat.primitives.asymmetric import ec
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [python]
+
+  - id: python-md5-hashlib
+    languages: [python]
+    severity: ERROR
+    message: MD5 is cryptographically broken. Use SHA-256, SHA-3, or BLAKE2.
+    patterns:
+      - pattern: hashlib.md5()
+      - pattern: hashlib.md5($X)
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [python]
+
+  - id: python-sha1-hashlib
+    languages: [python]
+    severity: ERROR
+    message: SHA-1 is weak and deprecated. Use SHA-256, SHA-3, or BLAKE2.
+    patterns:
+      - pattern: hashlib.sha1()
+      - pattern: hashlib.sha1($X)
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [python]
+
+  - id: python-des-cipher
+    languages: [python]
+    severity: ERROR
+    message: DES cipher detected. Use AES-256 or post-quantum symmetric encryption.
+    patterns:
+      - pattern: from Crypto.Cipher import DES
+      - pattern: Crypto.Cipher.DES
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [python]
+
+  - id: python-3des-cipher
+    languages: [python]
+    severity: ERROR
+    message: 3DES cipher detected. Use AES-256 or post-quantum symmetric alternatives.
+    patterns:
+      - pattern: from Crypto.Cipher import DES3
+      - pattern: Crypto.Cipher.DES3
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [python]
+
+  # ========== JAVASCRIPT/TYPESCRIPT RULES ==========
+  - id: js-rsa-crypto
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: RSA detected in Node.js crypto. Not post-quantum safe.
+    patterns:
+      - pattern: crypto.createSign("RSA-SHA256")
+      - pattern: crypto.createSign("RSA-SHA1")
+      - pattern: crypto.createVerify("RSA-SHA256")
+      - pattern: crypto.generateKeyPair("rsa", ...)
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+
+  - id: js-ecdh-crypto
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Elliptic Curve Diffie-Hellman detected. Vulnerable to quantum attacks.
+    patterns:
+      - pattern: crypto.createECDH(...)
+      - pattern: crypto.generateKeyPair("ec", ...)
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+
+  - id: js-md5-hash
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: MD5 is cryptographically broken. Use SHA-256, SHA-512, or SHA-3.
+    pattern: crypto.createHash("md5")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+
+  - id: js-sha1-hash
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: SHA-1 is weak and deprecated. Use SHA-256, SHA-512, or SHA-3.
+    pattern: crypto.createHash("sha1")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+
+  - id: js-des-cipher
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: DES/3DES detected. Use AES-256-GCM or post-quantum symmetric encryption.
+    patterns:
+      - pattern: crypto.createCipher("des", ...)
+      - pattern: crypto.createCipher("des-ede3", ...)
+      - pattern: crypto.createCipheriv("des-ecb", ...)
+      - pattern: crypto.createCipheriv("des-cbc", ...)
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+
+  - id: js-aes-128-warning
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: AES-128 may provide insufficient security against quantum attacks. Consider AES-256.
+    patterns:
+      - pattern: crypto.createCipher("aes128", ...)
+      - pattern: crypto.createCipheriv("aes-128-ecb", ...)
+      - pattern: crypto.createCipheriv("aes-128-cbc", ...)
+      - pattern: crypto.createCipheriv("aes-128-gcm", ...)
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+
+  # ========== ADDITIONAL QUANTUM-VULNERABLE PATTERNS ==========
+  - id: openssl-rsa-commands
+    languages: [bash, shell]
+    severity: ERROR
+    message: OpenSSL RSA key generation detected. Consider post-quantum alternatives.
+    patterns:
+      - pattern: openssl genrsa
+      - pattern: openssl rsa
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [openssl]
+
+  - id: ssh-rsa-keygen
+    languages: [bash, shell]
+    severity: ERROR
+    message: SSH RSA key generation detected. Consider Ed25519 or post-quantum alternatives.
+    pattern: ssh-keygen -t rsa
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [ssh]

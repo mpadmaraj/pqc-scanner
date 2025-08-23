@@ -2,6 +2,7 @@ import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
 import { storage } from "../storage";
+import { asyncScannerService } from "./async-scanner";
 import type { InsertVulnerability, Scan } from "@shared/schema";
 
 interface ScanResult {
@@ -19,6 +20,40 @@ class ScannerService {
   private activeScanJobs = new Map<string, any>();
 
   async startScan(scanId: string, repositoryId: string, config?: any) {
+    // Use the new async scanner service
+    const scanConfig = {
+      tools: config?.tools || ["semgrep"],
+      languages: config?.languages || [],
+      customRules: config?.customRules || [],
+      severity: config?.severity || "error",
+      maxFileSize: config?.maxFileSize || 10485760, // 10MB
+      timeout: config?.timeout || 300000, // 5 minutes
+    };
+
+    const jobId = await asyncScannerService.createScanJob(repositoryId, scanConfig);
+    return jobId;
+  }
+
+  async getScanStatus(scanId: string) {
+    const job = await asyncScannerService.getScanJob(scanId);
+    if (!job) {
+      // Fallback to database scan record
+      const scan = await storage.getScan(scanId);
+      return scan;
+    }
+    
+    return {
+      id: job.id,
+      repositoryId: job.repositoryId,
+      status: job.status,
+      progress: job.progress,
+      startedAt: job.startedAt,
+      completedAt: job.completedAt,
+      error: job.error,
+    };
+  }
+
+  async startScanLegacy(scanId: string, repositoryId: string, config?: any) {
     try {
       await storage.updateScanStatus(scanId, "scanning", 0);
       

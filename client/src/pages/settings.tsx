@@ -212,6 +212,7 @@ export default function Settings() {
         <TabsList>
           <TabsTrigger value="providers">Git Providers</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsTrigger value="scanner">Scanner</TabsTrigger>
         </TabsList>
 
         <TabsContent value="providers" className="space-y-6">
@@ -492,6 +493,142 @@ export default function Settings() {
               <p className="text-sm text-muted-foreground">
                 Additional preference settings will be available in future updates.
               </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="scanner" className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold">Scanner Configuration</h2>
+            <p className="text-muted-foreground">
+              Configure the built-in semgrep scanner and external scanner integrations
+            </p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Default Scanner Settings</CardTitle>
+              <CardDescription>
+                Configure the built-in semgrep scanner for post-quantum cryptography detection
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="maxConcurrentScans">Maximum Concurrent Scans</Label>
+                  <Input
+                    id="maxConcurrentScans"
+                    type="number"
+                    defaultValue="3"
+                    min="1"
+                    max="10"
+                    data-testid="input-max-concurrent-scans"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    How many scans can run simultaneously
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="scanTimeout">Scan Timeout (minutes)</Label>
+                  <Input
+                    id="scanTimeout"
+                    type="number"
+                    defaultValue="5"
+                    min="1"
+                    max="60"
+                    data-testid="input-scan-timeout"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Maximum time before a scan times out
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxFileSize">Maximum File Size (MB)</Label>
+                  <Input
+                    id="maxFileSize"
+                    type="number"
+                    defaultValue="10"
+                    min="1"
+                    max="100"
+                    data-testid="input-max-file-size"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Files larger than this will be skipped
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Enabled Rule Sets</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="pqc-rules" defaultChecked data-testid="checkbox-pqc-rules" />
+                      <Label htmlFor="pqc-rules">Post-Quantum Cryptography Rules</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="weak-crypto" defaultChecked data-testid="checkbox-weak-crypto" />
+                      <Label htmlFor="weak-crypto">Weak Cryptographic Algorithms</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="deprecated-hash" defaultChecked data-testid="checkbox-deprecated-hash" />
+                      <Label htmlFor="deprecated-hash">Deprecated Hash Functions</Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Button className="w-full" data-testid="button-save-scanner-settings">
+                <SettingsIcon className="mr-2 h-4 w-4" />
+                Save Scanner Settings
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>External Scanner Integrations</CardTitle>
+              <CardDescription>
+                Configure third-party security scanners and monitoring tools
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">Custom Scanner API</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Integrate with external scanning services via REST API
+                    </p>
+                  </div>
+                  <Badge variant="outline">Coming Soon</Badge>
+                </div>
+                
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>Planned integrations:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>Custom scanner APIs with progress monitoring</li>
+                    <li>Third-party vulnerability databases</li>
+                    <li>Enterprise security platforms</li>
+                    <li>Real-time scanning triggers</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">Scanner Performance</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Monitor scanner performance and resource usage
+                    </p>
+                  </div>
+                  <div className="text-right text-sm">
+                    <div className="text-green-600">Status: Running</div>
+                    <div className="text-muted-foreground">Queue: 0 pending</div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

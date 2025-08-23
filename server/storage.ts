@@ -668,6 +668,44 @@ export class DatabaseStorage implements IStorage {
       .delete(providerTokens)
       .where(eq(providerTokens.id, id));
   }
+
+  // Scanner configuration operations
+  async getScannerConfig(userId: string): Promise<any> {
+    // For now, return a default scanner config
+    return {
+      defaultTool: "semgrep",
+      maxConcurrentScans: 3,
+      timeout: 300000, // 5 minutes
+      maxFileSize: 10485760, // 10MB
+      enabledRules: ["all"],
+      externalScanners: []
+    };
+  }
+
+  async updateScannerConfig(userId: string, config: any): Promise<any> {
+    // For now, just return the config (would store in database in real implementation)
+    return config;
+  }
+
+  // Enhanced scan operations
+  async updateScan(id: string, updates: Partial<{ status: string; progress: number; completedAt: Date; error: string }>): Promise<void> {
+    const updateData: any = {};
+    
+    if (updates.status) updateData.status = updates.status;
+    if (updates.progress !== undefined) updateData.progress = updates.progress;
+    if (updates.completedAt) updateData.completedAt = updates.completedAt;
+    if (updates.error) updateData.errorMessage = updates.error;
+    
+    await db
+      .update(scans)
+      .set(updateData)
+      .where(eq(scans.id, id));
+  }
+
+  // Enhanced vulnerability operations
+  async deleteVulnerabilitiesByScan(scanId: string): Promise<void> {
+    await db.delete(vulnerabilities).where(eq(vulnerabilities.scanId, scanId));
+  }
 }
 
 export const storage = new DatabaseStorage();
