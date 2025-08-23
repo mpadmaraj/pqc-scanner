@@ -63,7 +63,6 @@ export default function ScanRepository() {
       return await response.json();
     },
     onSuccess: async (newRepo: any) => {
-      console.log("Repository created:", newRepo);
       queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
       setIsAddRepoModalOpen(false);
       
@@ -88,7 +87,6 @@ export default function ScanRepository() {
           }
         };
         
-        console.log("Starting scan with payload:", scanPayload);
         await apiRequest("POST", "/api/scans", scanPayload);
         
         queryClient.invalidateQueries({ queryKey: ["/api/scans"] });
@@ -98,7 +96,6 @@ export default function ScanRepository() {
           description: `${newRepo.name} has been added and vulnerability scan is now running.`,
         });
       } catch (scanError) {
-        console.error("Scan creation failed:", scanError);
         toast({
           title: "Repository added, scan failed",
           description: "Repository was added but scan failed to start. You can manually start it.",

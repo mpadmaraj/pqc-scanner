@@ -60,6 +60,13 @@ class ScannerService {
   private async prepareRepository(repository: any): Promise<string> {
     const tempDir = path.join(process.cwd(), "temp", repository.id);
     
+    // Clean up existing directory if it exists
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (error) {
+      // Directory doesn't exist, which is fine
+    }
+    
     // Create temp directory
     await fs.mkdir(tempDir, { recursive: true });
     

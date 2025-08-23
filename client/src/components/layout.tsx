@@ -25,7 +25,7 @@ export default function Layout({ children }: LayoutProps) {
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: BarChart3 },
-    { name: "Scan Repository", href: "/scan-repository", icon: Search },
+    { name: "Manage Repository", href: "/scan-repository", icon: Search },
     { name: "Scan History", href: "/scan-history", icon: History },
     { name: "Reports", href: "/reports", icon: FileText },
     { name: "Integrations", href: "/integrations", icon: Plug },
