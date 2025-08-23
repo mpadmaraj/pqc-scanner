@@ -217,170 +217,174 @@ export default function ScanHistory() {
                       <TableHead>Repository</TableHead>
                       <TableHead>Source</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Progress</TableHead>
-                      <TableHead>Started</TableHead>
+                      <TableHead>Scan Date & Time</TableHead>
                       <TableHead>Duration</TableHead>
-                      <TableHead>Tools</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedScans.map((scan: any) => (
-                      <TableRow key={scan.id} data-testid={`scan-row-${scan.id}`}>
-                        <TableCell>
-                          <div className="font-medium" data-testid={`text-repository-${scan.id}`}>
-                            {getRepositoryName(scan.repositoryId)}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {scan.totalFiles > 0 && `${scan.totalFiles} files`}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <TooltipProvider>
-                            {scan.integrationId ? (
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Badge variant="outline" className="text-xs">
-                                    <Zap className="w-3 h-3 mr-1" />
-                                    {integrations.find(i => i.id === scan.integrationId)?.name || "Integration"}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Triggered via {integrations.find(i => i.id === scan.integrationId)?.type || "integration"}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Badge variant="secondary" className="text-xs">
-                                    <User className="w-3 h-3 mr-1" />
-                                    Manual
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Manually initiated scan</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </TooltipProvider>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(scan.status)}
-                            {getStatusBadge(scan.status)}
-                          </div>
-                          {scan.errorMessage && (
-                            <div className="text-xs text-red-600 mt-1" data-testid={`text-error-${scan.id}`}>
-                              {scan.errorMessage}
+                      <>
+                        <TableRow key={scan.id} data-testid={`scan-row-${scan.id}`}>
+                          <TableCell>
+                            <div className="font-medium" data-testid={`text-repository-${scan.id}`}>
+                              {getRepositoryName(scan.repositoryId)}
                             </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {scan.status === "scanning" ? (
-                            <div className="space-y-1">
-                              <Progress value={scan.progress} className="w-16" />
-                              <div className="text-xs text-muted-foreground">
-                                {scan.progress}%
-                              </div>
+                            <div className="text-sm text-muted-foreground">
+                              {scan.totalFiles > 0 && `${scan.totalFiles} files`}
                             </div>
-                          ) : scan.status === "completed" ? (
-                            <div className="text-sm text-green-600">Complete</div>
-                          ) : (
-                            <div className="text-sm text-muted-foreground">-</div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm" data-testid={`text-started-${scan.id}`}>
-                            {scan.startedAt 
-                              ? new Date(scan.startedAt).toLocaleDateString()
-                              : "Not started"
-                            }
-                          </div>
-                          {scan.startedAt && (
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(scan.startedAt).toLocaleTimeString()}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm" data-testid={`text-duration-${scan.id}`}>
-                            {formatDuration(scan.startedAt, scan.completedAt)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {scan.scanConfig?.tools && (
-                            <div className="flex flex-wrap gap-1">
-                              {scan.scanConfig.tools.slice(0, 2).map((tool: string) => (
-                                <Badge key={tool} variant="secondary" className="text-xs">
-                                  {tool}
-                                </Badge>
-                              ))}
-                              {scan.scanConfig.tools.length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{scan.scanConfig.tools.length - 2}
-                                </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <TooltipProvider>
+                              {scan.integrationId ? (
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant="outline" className="text-xs">
+                                      <Zap className="w-3 h-3 mr-1" />
+                                      {integrations.find(i => i.id === scan.integrationId)?.name || "Integration"}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Triggered via {integrations.find(i => i.id === scan.integrationId)?.type || "integration"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant="secondary" className="text-xs">
+                                      <User className="w-3 h-3 mr-1" />
+                                      Manual
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Manually initiated scan</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <TooltipProvider>
+                            </TooltipProvider>
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setSelectedScan(
-                                      selectedScan === scan.id ? null : scan.id
-                                    )}
-                                    data-testid={`button-view-details-${scan.id}`}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{selectedScan === scan.id ? "Hide details" : "View details"}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              {scan.status === "failed" && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => retrySccanMutation.mutate(scan.id)}
-                                      disabled={retrySccanMutation.isPending}
-                                      data-testid={`button-retry-${scan.id}`}
-                                    >
-                                      <RefreshCw className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Retry failed scan</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                              {scan.status === "completed" && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      data-testid={`button-download-${scan.id}`}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Download scan report</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
+                              {getStatusIcon(scan.status)}
+                              {getStatusBadge(scan.status)}
                             </div>
-                          </TooltipProvider>
-                        </TableCell>
-                      </TableRow>
+                            {scan.status === "scanning" && (
+                              <div className="mt-1">
+                                <Progress value={scan.progress} className="w-20" />
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {scan.progress}%
+                                </div>
+                              </div>
+                            )}
+                            {scan.errorMessage && (
+                              <div className="text-xs text-red-600 mt-1" data-testid={`text-error-${scan.id}`}>
+                                {scan.errorMessage}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm" data-testid={`text-scan-datetime-${scan.id}`}>
+                              {scan.startedAt 
+                                ? new Date(scan.startedAt).toLocaleDateString()
+                                : scan.createdAt 
+                                ? new Date(scan.createdAt).toLocaleDateString()
+                                : "Not started"
+                              }
+                            </div>
+                            {(scan.startedAt || scan.createdAt) && (
+                              <div className="text-xs text-muted-foreground">
+                                {scan.startedAt 
+                                  ? new Date(scan.startedAt).toLocaleTimeString()
+                                  : new Date(scan.createdAt).toLocaleTimeString()
+                                }
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm" data-testid={`text-duration-${scan.id}`}>
+                              {formatDuration(scan.startedAt, scan.completedAt)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <TooltipProvider>
+                              <div className="flex items-center space-x-2">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setSelectedScan(
+                                        selectedScan === scan.id ? null : scan.id
+                                      )}
+                                      data-testid={`button-view-details-${scan.id}`}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{selectedScan === scan.id ? "Hide details" : "View details"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                {scan.status === "failed" && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => retrySccanMutation.mutate(scan.id)}
+                                        disabled={retrySccanMutation.isPending}
+                                        data-testid={`button-retry-${scan.id}`}
+                                      >
+                                        <RefreshCw className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Retry failed scan</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {scan.status === "completed" && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        data-testid={`button-download-${scan.id}`}
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Download scan report</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
+                            </TooltipProvider>
+                          </TableCell>
+                        </TableRow>
+                        {/* Vulnerability Details Row */}
+                        {selectedScan === scan.id && scanVulnerabilities && (
+                          <TableRow key={`${scan.id}-details`}>
+                            <TableCell colSpan={6} className="p-0">
+                              <div className="bg-gray-50 p-4 border-t border-gray-200">
+                                <div className="mb-3">
+                                  <h4 className="font-medium text-sm">
+                                    Vulnerabilities - {getRepositoryName(scan.repositoryId)}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground">
+                                    {scanVulnerabilities.length} vulnerabilities found in this scan
+                                  </p>
+                                </div>
+                                <VulnerabilityTable 
+                                  vulnerabilities={scanVulnerabilities} 
+                                  showRepository={false}
+                                />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
                     ))}
                   </TableBody>
                 </Table>
@@ -448,27 +452,6 @@ export default function ScanHistory() {
           </CardContent>
         </Card>
 
-        {/* Scan Details */}
-        {selectedScan && scanVulnerabilities && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>
-                Vulnerabilities - {getRepositoryName(
-                  filteredScans.find((s) => s.id === selectedScan)?.repositoryId || ""
-                )}
-              </CardTitle>
-              <CardDescription>
-                {scanVulnerabilities.length} vulnerabilities found in this scan
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <VulnerabilityTable 
-                vulnerabilities={scanVulnerabilities} 
-                showRepository={false}
-              />
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
