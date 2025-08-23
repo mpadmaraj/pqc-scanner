@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Github, GitBranch, Search, Play, Plus, ExternalLink, AlertCircle, CheckCircle, Clock, Filter, ArrowUpDown } from "lucide-react";
+import { Github, GitBranch, Search, Play, Plus, ExternalLink, AlertCircle, CheckCircle, Clock, Filter, ArrowUpDown, Edit, Trash2 } from "lucide-react";
 
 export default function ScanRepository() {
   // Add Repository Modal State
@@ -267,6 +267,45 @@ export default function ScanRepository() {
         customRules: [],
       }
     });
+  };
+
+  const handleEditRepository = (repo: any) => {
+    toast({
+      title: "Edit Repository",
+      description: "Edit functionality would open a modal to modify repository settings.",
+    });
+  };
+
+  const handleDeleteRepository = async (repositoryId: string) => {
+    if (!confirm("Are you sure you want to delete this repository? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/repositories/${repositoryId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete repository');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+      toast({
+        title: "Repository deleted",
+        description: "Repository has been successfully removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete repository. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSort = (column: string) => {
@@ -675,18 +714,43 @@ export default function ScanRepository() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              onClick={() => handleStartScan(repo.id)}
-                              disabled={repo.scanStatus === 'scanning' || repo.scanStatus === 'pending' || startScanMutation.isPending}
-                              size="sm"
-                              data-testid={`button-scan-now-${repo.id}`}
-                            >
-                              <Play className="h-3 w-3 mr-1" />
-                              {repo.scanStatus === 'scanning' || repo.scanStatus === 'pending' 
-                                ? "Scanning..." 
-                                : "Scan Now"
-                              }
-                            </Button>
+                            <div className="flex items-center space-x-1">
+                              <Button
+                                onClick={() => handleStartScan(repo.id)}
+                                disabled={repo.scanStatus === 'scanning' || repo.scanStatus === 'pending' || startScanMutation.isPending}
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                title={repo.scanStatus === 'scanning' || repo.scanStatus === 'pending' ? "Scanning..." : "Scan Now"}
+                                data-testid={`button-scan-now-${repo.id}`}
+                              >
+                                {repo.scanStatus === 'scanning' || repo.scanStatus === 'pending' ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                                ) : (
+                                  <Play className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                onClick={() => handleEditRepository(repo)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                title="Edit Repository"
+                                data-testid={`button-edit-${repo.id}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                onClick={() => handleDeleteRepository(repo.id)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Delete Repository"
+                                data-testid={`button-delete-${repo.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
