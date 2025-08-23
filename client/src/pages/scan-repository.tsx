@@ -353,6 +353,11 @@ export default function ScanRepository() {
 
       const [, owner, repoName] = urlMatch;
       const cleanRepoName = repoName.replace(/\.git$/, '');
+      
+      // Auto-populate repository name from URL if not already set
+      if (!repoName || repoName === "") {
+        setRepoName(cleanRepoName);
+      }
 
       // For GitHub repositories, try to fetch metadata
       if (url.includes('github.com')) {
@@ -361,7 +366,10 @@ export default function ScanRepository() {
           if (response.ok) {
             const repoData = await response.json();
             
-            // Auto-populate fields with fetched data
+            // Auto-populate repository name with the actual name from GitHub
+            setRepoName(repoData.name || cleanRepoName);
+            
+            // Auto-populate description if empty
             if (!description || description === "") {
               setDescription(repoData.description || "");
             }
@@ -379,7 +387,7 @@ export default function ScanRepository() {
               }
             }
 
-            setRepoValidationStatus("✓ Repository found and accessible");
+            setRepoValidationStatus("✓ Repository found and auto-populated");
           } else if (response.status === 404) {
             setRepoValidationStatus("❌ Repository not found or not accessible");
           } else {
@@ -389,7 +397,7 @@ export default function ScanRepository() {
           setRepoValidationStatus("❌ Error validating repository");
         }
       } else {
-        // For other providers, just validate URL format
+        // For other providers, just validate URL format and extract name
         setRepoValidationStatus("✓ Repository URL format is valid");
       }
     } catch (error) {
@@ -822,6 +830,39 @@ export default function ScanRepository() {
           </DialogHeader>
 
           <div className="space-y-6">
+            {/* Repository URL - First Field */}
+            <div className="space-y-2">
+              <Label htmlFor="repo-url">Repository URL</Label>
+              <div className="space-y-2">
+                <Input
+                  id="repo-url"
+                  value={repoUrl}
+                  onChange={(e) => {
+                    setRepoUrl(e.target.value);
+                    setRepoValidationStatus(null);
+                    setTimeout(() => validateAndFetchRepoMetadata(e.target.value), 1000);
+                  }}
+                  placeholder="https://github.com/username/repository"
+                  data-testid="input-repo-url"
+                  autoFocus
+                />
+                {(isValidatingRepo || repoValidationStatus) && (
+                  <div className="flex items-center space-x-2 text-xs">
+                    {isValidatingRepo && (
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                    )}
+                    <span className={
+                      repoValidationStatus?.includes('✓') ? 'text-green-600' :
+                      repoValidationStatus?.includes('❌') ? 'text-red-600' :
+                      'text-muted-foreground'
+                    }>
+                      {repoValidationStatus}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Repository Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -830,7 +871,7 @@ export default function ScanRepository() {
                   id="repo-name"
                   value={repoName}
                   onChange={(e) => setRepoName(e.target.value)}
-                  placeholder="my-crypto-project"
+                  placeholder="Will auto-populate from URL"
                   data-testid="input-repo-name"
                 />
               </div>
@@ -857,37 +898,6 @@ export default function ScanRepository() {
                     <SelectItem value="local">Local Repository</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="repo-url">Repository URL</Label>
-              <div className="space-y-2">
-                <Input
-                  id="repo-url"
-                  value={repoUrl}
-                  onChange={(e) => {
-                    setRepoUrl(e.target.value);
-                    setRepoValidationStatus(null);
-                    setTimeout(() => validateAndFetchRepoMetadata(e.target.value), 1000);
-                  }}
-                  placeholder="https://github.com/username/repository"
-                  data-testid="input-repo-url"
-                />
-                {(isValidatingRepo || repoValidationStatus) && (
-                  <div className="flex items-center space-x-2 text-xs">
-                    {isValidatingRepo && (
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
-                    )}
-                    <span className={
-                      repoValidationStatus?.includes('✓') ? 'text-green-600' :
-                      repoValidationStatus?.includes('❌') ? 'text-red-600' :
-                      'text-muted-foreground'
-                    }>
-                      {repoValidationStatus}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
