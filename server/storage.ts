@@ -55,7 +55,7 @@ export interface IStorage {
   // Integration operations
   getIntegrations(): Promise<Integration[]>;
   getIntegration(id: string): Promise<Integration | undefined>;
-  createIntegration(integration: InsertIntegration): Promise<Integration>;
+  createIntegration(integration: InsertIntegration & { apiKey: string }): Promise<Integration>;
   updateIntegration(id: string, updates: Partial<Integration>): Promise<Integration>;
 
   // Dashboard stats
@@ -379,13 +379,18 @@ export class DatabaseStorage implements IStorage {
     return integration || undefined;
   }
 
-  async createIntegration(integration: InsertIntegration): Promise<Integration> {
+  async createIntegration(integration: InsertIntegration & { apiKey: string }): Promise<Integration> {
     const safeIntegration: any = {
       ...integration,
       config: {
         enabled: Boolean(integration.config.enabled),
-        apiKey: typeof integration.config.apiKey === 'string' ? integration.config.apiKey : undefined,
-        webhookUrl: typeof integration.config.webhookUrl === 'string' ? integration.config.webhookUrl : undefined
+        repositoryUrl: typeof integration.config.repositoryUrl === 'string' ? integration.config.repositoryUrl : undefined,
+        jenkinsUrl: typeof integration.config.jenkinsUrl === 'string' ? integration.config.jenkinsUrl : undefined,
+        username: typeof integration.config.username === 'string' ? integration.config.username : undefined,
+        sonarUrl: typeof integration.config.sonarUrl === 'string' ? integration.config.sonarUrl : undefined,
+        projectKey: typeof integration.config.projectKey === 'string' ? integration.config.projectKey : undefined,
+        webhookUrl: typeof integration.config.webhookUrl === 'string' ? integration.config.webhookUrl : undefined,
+        permissions: Array.isArray(integration.config.permissions) ? integration.config.permissions : undefined
       }
     };
     

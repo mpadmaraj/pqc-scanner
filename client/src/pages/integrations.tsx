@@ -12,8 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Github, GitlabIcon as Gitlab, Cog, Code, Key, Plus, Settings, CheckCircle, AlertCircle, Copy } from "lucide-react";
-
+import { Github, GitlabIcon as Gitlab, Cog, Code, Key, Plus, Settings, CheckCircle, AlertCircle, Copy, Eye, EyeOff, FileText, Loader2 } from "lucide-react";
 
 export default function Integrations() {
   const [newIntegration, setNewIntegration] = useState({
@@ -23,12 +22,21 @@ export default function Integrations() {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [showApiKey, setShowApiKey] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: integrations = [], isLoading } = useQuery<Integration[]>({
     queryKey: ["/api/integrations"],
+  });
+
+  const { data: instructionsData, isLoading: instructionsLoading } = useQuery({
+    queryKey: ["/api/integrations", selectedIntegration?.id, "instructions"],
+    queryFn: () => apiRequest("GET", `/api/integrations/${selectedIntegration?.id}/instructions`),
+    enabled: !!selectedIntegration && showInstructions,
   });
 
   const createIntegrationMutation = useMutation({
@@ -41,7 +49,7 @@ export default function Integrations() {
       setNewIntegration({ name: "", type: "github_actions", config: { enabled: true } });
       toast({
         title: "Integration added",
-        description: "Integration has been successfully configured.",
+        description: "Integration has been successfully configured with API key generated.",
       });
     },
     onError: () => {
@@ -68,7 +76,6 @@ export default function Integrations() {
 
   const testConnectionMutation = useMutation({
     mutationFn: async (integration: Integration) => {
-      // This would test the connection based on integration type
       return await apiRequest("POST", `/api/integrations/${integration.id}/test`, {});
     },
     onSuccess: () => {
@@ -98,6 +105,27 @@ export default function Integrations() {
     updateIntegrationMutation.mutate({ id, isActive });
   };
 
+  const handleCopyApiKey = (apiKey: string) => {
+    navigator.clipboard.writeText(apiKey);
+    toast({
+      title: "API key copied",
+      description: "API key has been copied to clipboard.",
+    });
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast({
+      title: "Code copied",
+      description: "Integration code has been copied to clipboard.",
+    });
+  };
+
+  const handleShowInstructions = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    setShowInstructions(true);
+  };
+
   const getIntegrationIcon = (type: string) => {
     switch (type) {
       case "github_actions":
@@ -120,343 +148,345 @@ export default function Integrations() {
       return <Badge variant="secondary">Inactive</Badge>;
     }
     
-    // This would be determined by actual connection testing
-    const isHealthy = true; // Placeholder
+    const isHealthy = integration.lastUsed ? true : false;
     return isHealthy ? (
-      <Badge className="bg-green-100 text-green-800">Active</Badge>
+      <Badge variant="default" className="bg-green-500">
+        <CheckCircle className="w-3 h-3 mr-1" />
+        Active
+      </Badge>
     ) : (
-      <Badge variant="destructive">Error</Badge>
+      <Badge variant="outline">
+        <AlertCircle className="w-3 h-3 mr-1" />
+        Not Used
+      </Badge>
     );
   };
 
-  const integrationTemplates = {
-    github_actions: {
-      name: "GitHub Actions",
-      description: "Integrate PQC scanning into your GitHub CI/CD pipeline",
-      fields: [
-        { name: "apiKey", label: "API Key", type: "password", required: true },
-        { name: "repositoryUrl", label: "Repository URL", type: "text", required: true }
-      ]
-    },
-    jenkins: {
-      name: "Jenkins",
-      description: "Add PQC scanning to your Jenkins build pipeline",
-      fields: [
-        { name: "jenkinsUrl", label: "Jenkins URL", type: "text", required: true },
-        { name: "username", label: "Username", type: "text", required: true },
-        { name: "apiToken", label: "API Token", type: "password", required: true }
-      ]
-    },
-    sonarqube: {
-      name: "SonarQube",
-      description: "Integrate with SonarQube quality gates",
-      fields: [
-        { name: "sonarUrl", label: "SonarQube URL", type: "text", required: true },
-        { name: "token", label: "Access Token", type: "password", required: true },
-        { name: "projectKey", label: "Project Key", type: "text", required: true }
-      ]
-    },
-    api_key: {
-      name: "API Access",
-      description: "Generate API keys for external integrations",
-      fields: [
-        { name: "keyName", label: "Key Name", type: "text", required: true },
-        { name: "permissions", label: "Permissions", type: "select", options: ["read", "write", "admin"] }
-      ]
+  const getIntegrationType = (type: string) => {
+    switch (type) {
+      case "github_actions":
+        return "GitHub Actions";
+      case "gitlab":
+        return "GitLab CI";
+      case "jenkins":
+        return "Jenkins";
+      case "sonarqube":
+        return "SonarQube";
+      case "api_key":
+        return "API Key";
+      default:
+        return type;
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-surface px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-medium text-foreground" data-testid="text-page-title">
-              Q-Scan Integrations
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Connect Q-Scan with your development tools and CI/CD pipelines
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-add-integration">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Integration
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Add New Integration</DialogTitle>
-                <DialogDescription>
-                  Configure a new integration for your development workflow
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="integration-name">Name</Label>
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
+          <p className="text-muted-foreground">
+            Connect PQC Scanner with your CI/CD pipelines and development tools
+          </p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-add-integration">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Integration
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Integration</DialogTitle>
+              <DialogDescription>
+                Configure a new integration to automate security scanning in your workflow.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Integration Name</Label>
+                <Input
+                  data-testid="input-integration-name"
+                  id="name"
+                  value={newIntegration.name}
+                  onChange={(e) => setNewIntegration(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="My GitHub Actions Integration"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="type">Integration Type</Label>
+                <select
+                  data-testid="select-integration-type"
+                  id="type"
+                  value={newIntegration.type}
+                  onChange={(e) => setNewIntegration(prev => ({ ...prev, type: e.target.value as any }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                >
+                  <option value="github_actions">GitHub Actions</option>
+                  <option value="jenkins">Jenkins</option>
+                  <option value="sonarqube">SonarQube</option>
+                  <option value="api_key">API Key</option>
+                </select>
+              </div>
+              {newIntegration.type === "github_actions" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="repo-url">Repository URL (Optional)</Label>
                   <Input
-                    id="integration-name"
-                    value={newIntegration.name}
-                    onChange={(e) => setNewIntegration({ ...newIntegration, name: e.target.value })}
-                    placeholder="My GitHub Integration"
-                    data-testid="input-integration-name"
+                    data-testid="input-repository-url"
+                    id="repo-url"
+                    placeholder="https://github.com/username/repo"
+                    onChange={(e) => setNewIntegration(prev => ({
+                      ...prev,
+                      config: { ...prev.config, repositoryUrl: e.target.value }
+                    }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="integration-type">Type</Label>
-                  <select
-                    id="integration-type"
-                    value={newIntegration.type}
-                    onChange={(e) => setNewIntegration({ ...newIntegration, type: e.target.value as any })}
-                    className="w-full px-3 py-2 border rounded-md"
-                    data-testid="select-integration-type"
-                  >
-                    <option value="github_actions">GitHub Actions</option>
-                    <option value="jenkins">Jenkins</option>
-                    <option value="sonarqube">SonarQube</option>
-                    <option value="api_key">API Key</option>
-                  </select>
+              )}
+              {newIntegration.type === "jenkins" && (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="jenkins-url">Jenkins URL</Label>
+                    <Input
+                      data-testid="input-jenkins-url"
+                      id="jenkins-url"
+                      placeholder="https://jenkins.example.com"
+                      onChange={(e) => setNewIntegration(prev => ({
+                        ...prev,
+                        config: { ...prev.config, jenkinsUrl: e.target.value }
+                      }))}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      data-testid="input-username"
+                      id="username"
+                      placeholder="jenkins-user"
+                      onChange={(e) => setNewIntegration(prev => ({
+                        ...prev,
+                        config: { ...prev.config, username: e.target.value }
+                      }))}
+                    />
+                  </div>
+                </>
+              )}
+              {newIntegration.type === "sonarqube" && (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="sonar-url">SonarQube URL</Label>
+                    <Input
+                      data-testid="input-sonar-url"
+                      id="sonar-url"
+                      placeholder="https://sonar.example.com"
+                      onChange={(e) => setNewIntegration(prev => ({
+                        ...prev,
+                        config: { ...prev.config, sonarUrl: e.target.value }
+                      }))}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="project-key">Project Key</Label>
+                    <Input
+                      data-testid="input-project-key"
+                      id="project-key"
+                      placeholder="my-project-key"
+                      onChange={(e) => setNewIntegration(prev => ({
+                        ...prev,
+                        config: { ...prev.config, projectKey: e.target.value }
+                      }))}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                data-testid="button-create-integration"
+                onClick={() => createIntegrationMutation.mutate(newIntegration)}
+                disabled={!newIntegration.name || createIntegrationMutation.isPending}
+              >
+                {createIntegrationMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Create Integration
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {integrations.map((integration) => (
+          <Card key={integration.id} className="relative">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="flex items-center space-x-2">
+                {getIntegrationIcon(integration.type)}
+                <div>
+                  <CardTitle className="text-sm font-medium" data-testid={`text-integration-name-${integration.id}`}>
+                    {integration.name}
+                  </CardTitle>
+                  <CardDescription>{getIntegrationType(integration.type)}</CardDescription>
                 </div>
+              </div>
+              {getStatusBadge(integration)}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Active</span>
+                <Switch
+                  data-testid={`switch-integration-active-${integration.id}`}
+                  checked={integration.isActive}
+                  onCheckedChange={(checked) => handleToggleIntegration(integration.id, checked)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">API Key</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    data-testid={`input-api-key-${integration.id}`}
+                    type={showApiKey === integration.id ? "text" : "password"}
+                    value={integration.apiKey}
+                    readOnly
+                    className="font-mono text-xs"
+                  />
+                  <Button
+                    data-testid={`button-toggle-api-key-${integration.id}`}
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowApiKey(showApiKey === integration.id ? null : integration.id)}
+                  >
+                    {showApiKey === integration.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    data-testid={`button-copy-api-key-${integration.id}`}
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleCopyApiKey(integration.apiKey)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {integration.lastUsed && (
+                <div className="text-xs text-muted-foreground">
+                  Last used: {new Date(integration.lastUsed).toLocaleDateString()}
+                </div>
+              )}
+
+              <div className="flex space-x-2">
                 <Button
-                  onClick={() => createIntegrationMutation.mutate(newIntegration)}
-                  disabled={createIntegrationMutation.isPending || !newIntegration.name}
-                  className="w-full"
-                  data-testid="button-create-integration"
+                  data-testid={`button-test-connection-${integration.id}`}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleTestConnection(integration)}
+                  disabled={testingConnection === integration.id}
+                  className="flex-1"
                 >
-                  {createIntegrationMutation.isPending ? "Creating..." : "Create Integration"}
+                  {testingConnection === integration.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  )}
+                  Test
+                </Button>
+                <Button
+                  data-testid={`button-view-instructions-${integration.id}`}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleShowInstructions(integration)}
+                  className="flex-1"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Instructions
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="p-6">
-        <Tabs defaultValue="active" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="active" data-testid="tab-active">Active Integrations</TabsTrigger>
-            <TabsTrigger value="templates" data-testid="tab-templates">Templates</TabsTrigger>
-            <TabsTrigger value="api" data-testid="tab-api">API Documentation</TabsTrigger>
-          </TabsList>
+      {integrations.length === 0 && (
+        <Card className="text-center py-12">
+          <CardHeader>
+            <CardTitle>No integrations configured</CardTitle>
+            <CardDescription>
+              Add your first integration to start automating security scans in your development workflow.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Integration
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-          <TabsContent value="active" className="space-y-6">
-            {isLoading ? (
-              <div className="text-center py-8">Loading integrations...</div>
-            ) : !integrations || integrations.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-8">
-                    <Settings className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-medium mb-2">No Integrations</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Connect your development tools to automate PQC vulnerability scanning
-                    </p>
-                    <Button onClick={() => setIsDialogOpen(true)} data-testid="button-add-first-integration">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Integration
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {integrations.map((integration: Integration) => (
-                  <Card key={integration.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-muted rounded-lg">
-                            {getIntegrationIcon(integration.type)}
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg" data-testid={`text-integration-name-${integration.id}`}>
-                              {integration.name}
-                            </CardTitle>
-                            <CardDescription className="text-xs">
-                              {integration.type.replace("_", " ")}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        {getStatusBadge(integration)}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {integration.lastUsed && (
-                        <div className="text-sm text-muted-foreground">
-                          Last used: {new Date(integration.lastUsed).toLocaleDateString()}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor={`toggle-${integration.id}`} className="text-sm">
-                          Enable Integration
-                        </Label>
-                        <Switch
-                          id={`toggle-${integration.id}`}
-                          checked={integration.isActive ?? false}
-                          onCheckedChange={(checked) => handleToggleIntegration(integration.id, checked)}
-                          data-testid={`switch-active-${integration.id}`}
-                        />
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleTestConnection(integration)}
-                          disabled={testingConnection === integration.id}
-                          className="flex-1"
-                          data-testid={`button-test-${integration.id}`}
-                        >
-                          {testingConnection === integration.id ? (
-                            <>Testing...</>
-                          ) : (
-                            <>
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Test
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          data-testid={`button-configure-${integration.id}`}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="templates" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(integrationTemplates).map(([key, template]) => (
-                <Card key={key}>
-                  <CardHeader>
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-muted rounded-lg">
-                        {getIntegrationIcon(key)}
-                      </div>
-                      <div>
-                        <CardTitle data-testid={`text-template-${key}`}>{template.name}</CardTitle>
-                        <CardDescription>{template.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="text-sm font-medium">Configuration:</div>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        {template.fields.map((field) => (
-                          <li key={field.name} data-testid={`text-field-${key}-${field.name}`}>
-                            • {field.label} {field.required && "(Required)"}
-                          </li>
-                        ))}
-                      </ul>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          setNewIntegration({
-                            name: template.name,
-                            type: key as any,
-                            config: { enabled: true }
-                          });
-                          setIsDialogOpen(true);
-                        }}
-                        data-testid={`button-use-template-${key}`}
-                      >
-                        Use Template
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+      {/* Instructions Dialog */}
+      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              {selectedIntegration && getIntegrationIcon(selectedIntegration.type)}
+              <span>Integration Instructions - {selectedIntegration?.name}</span>
+            </DialogTitle>
+            <DialogDescription>
+              Follow these steps to complete the integration setup.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {instructionsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              Loading instructions...
             </div>
-          </TabsContent>
-
-          <TabsContent value="api" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>API Documentation</CardTitle>
-                <CardDescription>
-                  Use these endpoints to integrate PQC Scanner into your custom workflows
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Start a Scan</h4>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm">
-                      <div className="flex items-center justify-between">
-                        <span>POST /api/scans</span>
-                        <Button variant="ghost" size="sm">
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="mt-2 text-sm text-muted-foreground">
-                      Initiates a new vulnerability scan for a repository
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Get Scan Status</h4>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm">
-                      <div className="flex items-center justify-between">
-                        <span>GET /api/scans/:id/progress</span>
-                        <Button variant="ghost" size="sm">
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Get Vulnerabilities</h4>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm">
-                      <div className="flex items-center justify-between">
-                        <span>GET /api/vulnerabilities</span>
-                        <Button variant="ghost" size="sm">
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Generate VDR Report</h4>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm">
-                      <div className="flex items-center justify-between">
-                        <span>POST /api/vdr/:vulnerabilityId/generate</span>
-                        <Button variant="ghost" size="sm">
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+          ) : instructionsData ? (
+            <Tabs defaultValue="instructions" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="instructions">Setup Instructions</TabsTrigger>
+                <TabsTrigger value="code">Integration Code</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="instructions" className="space-y-4">
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <pre className="whitespace-pre-wrap text-sm">{instructionsData.instructions}</pre>
                 </div>
-
-                <div className="pt-4 border-t">
-                  <h4 className="text-sm font-medium mb-2">Authentication</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Include your API key in the Authorization header:
-                  </p>
-                  <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
-                    Authorization: Bearer YOUR_API_KEY
-                  </div>
+              </TabsContent>
+              
+              <TabsContent value="code" className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-medium">Integration Code</h4>
+                  <Button
+                    data-testid="button-copy-integration-code"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyCode(instructionsData.code)}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Code
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
+                  <code>{instructionsData.code}</code>
+                </pre>
+              </TabsContent>
+            </Tabs>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

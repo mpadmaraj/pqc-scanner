@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { Scan, Repository, Vulnerability } from "@shared/schema";
+import type { Scan, Repository, Vulnerability, Integration } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, User, Zap } from "lucide-react";
 import VulnerabilityTable from "@/components/vulnerability-table";
 
 export default function ScanHistory() {
@@ -29,6 +29,10 @@ export default function ScanHistory() {
 
   const { data: repositories = [] } = useQuery<Repository[]>({
     queryKey: ["/api/repositories"],
+  });
+
+  const { data: integrations = [] } = useQuery<Integration[]>({
+    queryKey: ["/api/integrations"],
   });
 
   const { data: scanVulnerabilities = [] } = useQuery<Vulnerability[]>({
@@ -211,6 +215,7 @@ export default function ScanHistory() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Repository</TableHead>
+                      <TableHead>Source</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Progress</TableHead>
                       <TableHead>Started</TableHead>
@@ -229,6 +234,35 @@ export default function ScanHistory() {
                           <div className="text-sm text-muted-foreground">
                             {scan.totalFiles > 0 && `${scan.totalFiles} files`}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <TooltipProvider>
+                            {scan.integrationId ? (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge variant="outline" className="text-xs">
+                                    <Zap className="w-3 h-3 mr-1" />
+                                    {integrations.find(i => i.id === scan.integrationId)?.name || "Integration"}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Triggered via {integrations.find(i => i.id === scan.integrationId)?.type || "integration"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge variant="secondary" className="text-xs">
+                                    <User className="w-3 h-3 mr-1" />
+                                    Manual
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Manually initiated scan</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">

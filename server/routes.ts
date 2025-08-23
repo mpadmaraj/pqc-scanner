@@ -21,8 +21,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/repositories", async (req, res) => {
     try {
+      // Check for API key authentication
+      const authHeader = req.headers.authorization;
+      let integrationId = null;
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const apiKey = authHeader.substring(7);
+        const integration = await integrationsService.authenticateApiKey(apiKey);
+        if (integration) {
+          integrationId = integration.id;
+          // Update last used timestamp
+          await storage.updateIntegration(integration.id, { lastUsed: new Date() });
+        }
+      }
+      
       const data = insertRepositorySchema.parse(req.body);
-      const repository = await storage.createRepository(data);
+      const repositoryData = {
+        ...data,
+        integrationId
+      };
+      const repository = await storage.createRepository(repositoryData);
       res.json(repository);
     } catch (error) {
       res.status(400).json({ error: "Invalid repository data" });
@@ -84,8 +102,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/scans", async (req, res) => {
     try {
+      // Check for API key authentication
+      const authHeader = req.headers.authorization;
+      let integrationId = null;
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const apiKey = authHeader.substring(7);
+        const integration = await integrationsService.authenticateApiKey(apiKey);
+        if (integration) {
+          integrationId = integration.id;
+          // Update last used timestamp
+          await storage.updateIntegration(integration.id, { lastUsed: new Date() });
+        }
+      }
+      
       const data = insertScanSchema.parse(req.body);
-      const scan = await storage.createScan(data);
+      const scanData = {
+        ...data,
+        integrationId
+      };
+      const scan = await storage.createScan(scanData);
       
       // Start scanning process in background
       scannerService.startScan(scan.id, scan.repositoryId, data.scanConfig);
@@ -272,7 +308,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/integrations", async (req, res) => {
     try {
       const data = insertIntegrationSchema.parse(req.body);
-      const integration = await storage.createIntegration(data);
+      // Generate API key for the integration
+      const apiKey = integrationsService.generateApiKey();
+      const integrationData = {
+        ...data,
+        apiKey
+      };
+      const integration = await storage.createIntegration(integrationData);
       res.json(integration);
     } catch (error) {
       res.status(400).json({ error: "Invalid integration data" });
@@ -286,6 +328,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(integration);
     } catch (error) {
       res.status(400).json({ error: "Failed to update integration" });
+    }
+  });
+
+  app.get("/api/integrations/:id/instructions", async (req, res) => {
+    try {
+      const integration = await storage.getIntegration(req.params.id);
+      if (!integration) {
+        return res.status(404).json({ error: "Integration not found" });
+      }
+      const instructionsData = integrationsService.generateIntegrationInstructions(integration);
+      res.json(instructionsData);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to generate instructions" });
+    }
+  });
+
+  app.post("/api/integrations/:id/test", async (req, res) => {
+    try {
+      const integration = await storage.getIntegration(req.params.id);
+      if (!integration) {
+        return res.status(404).json({ error: "Integration not found" });
+      }
+
+      let testResult = false;
+      switch (integration.type) {
+        case "github_actions":
+          if (integration.config.apiKey) {
+            testResult = await integrationsService.testGitHubConnection(integration.config.apiKey);
+          }
+          break;
+        case "jenkins":
+          testResult = await integrationsService.testJenkinsConnection(integration.config);
+          break;
+        case "sonarqube":
+          testResult = await integrationsService.testSonarQubeConnection(integration.config);
+          break;
+        case "api_key":
+          testResult = true; // API keys are always "testable"
+          break;
+      }
+
+      res.json({ success: testResult });
+    } catch (error) {
+      res.status(500).json({ error: "Test connection failed" });
     }
   });
 

@@ -27,6 +27,7 @@ export const repositories = pgTable("repositories", {
   description: text("description"),
   languages: jsonb("languages").$type<string[]>().default([]),
   lastScanAt: timestamp("last_scan_at"),
+  integrationId: varchar("integration_id").references(() => integrations.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -40,6 +41,7 @@ export const scans = pgTable("scans", {
   completedAt: timestamp("completed_at"),
   errorMessage: text("error_message"),
   totalFiles: integer("total_files").default(0),
+  integrationId: varchar("integration_id").references(() => integrations.id),
   scanConfig: jsonb("scan_config").$type<{
     tools: string[];
     languages: string[];
@@ -106,10 +108,16 @@ export const vdrReports = pgTable("vdr_reports", {
 export const integrations = pgTable("integrations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  type: text("type").notNull(), // github_actions, jenkins, sonarqube
+  type: text("type").notNull(), // github_actions, jenkins, sonarqube, api_key
+  apiKey: text("api_key").notNull(), // Generated API key for this integration
   config: jsonb("config").$type<{
-    apiKey?: string;
+    repositoryUrl?: string;
+    jenkinsUrl?: string;
+    username?: string;
+    sonarUrl?: string;
+    projectKey?: string;
     webhookUrl?: string;
+    permissions?: string[];
     enabled: boolean;
   }>().notNull(),
   isActive: boolean("is_active").default(true),
@@ -118,16 +126,24 @@ export const integrations = pgTable("integrations", {
 });
 
 // Relations
-export const repositoriesRelations = relations(repositories, ({ many }) => ({
+export const repositoriesRelations = relations(repositories, ({ one, many }) => ({
   scans: many(scans),
   vulnerabilities: many(vulnerabilities),
   cbomReports: many(cbomReports),
+  integration: one(integrations, {
+    fields: [repositories.integrationId],
+    references: [integrations.id],
+  }),
 }));
 
 export const scansRelations = relations(scans, ({ one, many }) => ({
   repository: one(repositories, {
     fields: [scans.repositoryId],
     references: [repositories.id],
+  }),
+  integration: one(integrations, {
+    fields: [scans.integrationId],
+    references: [integrations.id],
   }),
   vulnerabilities: many(vulnerabilities),
   cbomReport: one(cbomReports),
@@ -199,6 +215,7 @@ export const insertVdrReportSchema = createInsertSchema(vdrReports).omit({
 
 export const insertIntegrationSchema = createInsertSchema(integrations).omit({
   id: true,
+  apiKey: true,
   createdAt: true,
   lastUsed: true,
 });
