@@ -6,6 +6,7 @@ import { cbomService } from "./services/cbom";
 import { vdrService } from "./services/vdr";
 import { integrationsService } from "./services/integrations";
 import { initializeDefaultIntegrations } from "./services/integrations";
+import { repositoryImportService } from "./services/repository-import";
 import { insertRepositorySchema, insertScanSchema, insertVulnerabilitySchema, insertIntegrationSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -434,6 +435,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString(),
         database: "disconnected",
         error: "Database connection failed"
+      });
+    }
+  });
+
+  // Provider token management routes
+  app.get("/api/settings/provider-tokens", async (req, res) => {
+    try {
+      // For now, we'll use a hardcoded user ID since we don't have auth yet
+      const userId = "demo-user";
+      const tokens = await storage.getProviderTokens(userId);
+      res.json(tokens);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get provider tokens" });
+    }
+  });
+
+  app.post("/api/settings/provider-tokens", async (req, res) => {
+    try {
+      const { provider, accessToken, organizationAccess } = req.body;
+      
+      if (!provider || !accessToken) {
+        return res.status(400).json({ error: "Provider and access token are required" });
+      }
+
+      // For now, we'll use a hardcoded user ID since we don't have auth yet
+      const userId = "demo-user";
+
+      // Check if a token for this provider already exists
+      const existingToken = await storage.getProviderTokenByProvider(userId, provider);
+      if (existingToken) {
+        return res.status(400).json({ error: "Token for this provider already exists. Please update or delete the existing token first." });
+      }
+
+      const tokenData = {
+        userId,
+        provider,
+        accessToken,
+        organizationAccess: organizationAccess || [],
+        tokenType: "personal_access_token" as const,
+        isActive: true
+      };
+
+      const createdToken = await storage.createProviderToken(tokenData);
+      res.status(201).json(createdToken);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create provider token" });
+    }
+  });
+
+  app.post("/api/settings/provider-tokens/:id/test", async (req, res) => {
+    try {
+      const token = await storage.getProviderToken(req.params.id);
+      if (!token) {
+        return res.status(404).json({ error: "Provider token not found" });
+      }
+
+      // Test the token by making a simple API call
+      let testResult = false;
+
+      switch (token.provider) {
+        case "github":
+          try {
+            const response = await fetch("https://api.github.com/user", {
+              headers: {
+                "Authorization": `Bearer ${token.accessToken}`,
+                "Accept": "application/vnd.github.v3+json"
+              }
+            });
+            testResult = response.ok;
+          } catch (error) {
+            testResult = false;
+          }
+          break;
+        case "gitlab":
+          try {
+            const response = await fetch("https://gitlab.com/api/v4/user", {
+              headers: {
+                "Authorization": `Bearer ${token.accessToken}`
+              }
+            });
+            testResult = response.ok;
+          } catch (error) {
+            testResult = false;
+          }
+          break;
+        case "bitbucket":
+          try {
+            const response = await fetch("https://api.bitbucket.org/2.0/user", {
+              headers: {
+                "Authorization": `Bearer ${token.accessToken}`
+              }
+            });
+            testResult = response.ok;
+          } catch (error) {
+            testResult = false;
+          }
+          break;
+        default:
+          return res.status(400).json({ error: "Unsupported provider" });
+      }
+
+      if (testResult) {
+        res.json({ success: true });
+      } else {
+        res.status(401).json({ error: "Token validation failed" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to test provider token" });
+    }
+  });
+
+  app.delete("/api/settings/provider-tokens/:id", async (req, res) => {
+    try {
+      const token = await storage.getProviderToken(req.params.id);
+      if (!token) {
+        return res.status(404).json({ error: "Provider token not found" });
+      }
+
+      await storage.deleteProviderToken(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete provider token" });
+    }
+  });
+
+  // Organization repository import routes
+  app.post("/api/repositories/scan-organization", async (req, res) => {
+    try {
+      const { provider, organization } = req.body;
+      
+      if (!provider || !organization) {
+        return res.status(400).json({ error: "Provider and organization are required" });
+      }
+
+      // For now, we'll use a hardcoded user ID since we don't have auth yet
+      const userId = "demo-user";
+      
+      const result = await repositoryImportService.scanOrganization(userId, provider, organization);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to scan organization" 
+      });
+    }
+  });
+
+  app.post("/api/repositories/rescan-all", async (req, res) => {
+    try {
+      // For now, we'll use a hardcoded user ID since we don't have auth yet
+      const userId = "demo-user";
+      
+      const results = await repositoryImportService.rescanAllProviders(userId);
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to rescan repositories" 
       });
     }
   });

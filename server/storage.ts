@@ -1,12 +1,13 @@
 import { 
-  repositories, scans, vulnerabilities, cbomReports, vdrReports, integrations, users,
+  repositories, scans, vulnerabilities, cbomReports, vdrReports, integrations, users, providerTokens,
   type Repository, type InsertRepository,
   type Scan, type InsertScan,
   type Vulnerability, type InsertVulnerability,
   type CbomReport, type InsertCbomReport,
   type VdrReport, type InsertVdrReport,
   type Integration, type InsertIntegration,
-  type User, type InsertUser
+  type User, type InsertUser,
+  type ProviderToken, type InsertProviderToken
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
@@ -57,6 +58,14 @@ export interface IStorage {
   getIntegration(id: string): Promise<Integration | undefined>;
   createIntegration(integration: InsertIntegration & { apiKey: string }): Promise<Integration>;
   updateIntegration(id: string, updates: Partial<Integration>): Promise<Integration>;
+
+  // Provider token operations
+  getProviderTokens(userId: string): Promise<ProviderToken[]>;
+  getProviderToken(id: string): Promise<ProviderToken | undefined>;
+  getProviderTokenByProvider(userId: string, provider: string): Promise<ProviderToken | undefined>;
+  createProviderToken(token: InsertProviderToken): Promise<ProviderToken>;
+  updateProviderToken(id: string, updates: Partial<ProviderToken>): Promise<ProviderToken>;
+  deleteProviderToken(id: string): Promise<void>;
 
   // Dashboard stats
   getDashboardStats(): Promise<{
@@ -600,6 +609,64 @@ export class DatabaseStorage implements IStorage {
       totalVulnerabilities: vulnCount?.count || 0,
       lastScanDate: lastScan?.completedAt?.toISOString() || null,
     };
+  }
+
+  // Provider token operations
+  async getProviderTokens(userId: string): Promise<ProviderToken[]> {
+    return await db
+      .select()
+      .from(providerTokens)
+      .where(eq(providerTokens.userId, userId))
+      .orderBy(desc(providerTokens.createdAt));
+  }
+
+  async getProviderToken(id: string): Promise<ProviderToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(providerTokens)
+      .where(eq(providerTokens.id, id));
+    return token || undefined;
+  }
+
+  async getProviderTokenByProvider(userId: string, provider: string): Promise<ProviderToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(providerTokens)
+      .where(and(
+        eq(providerTokens.userId, userId),
+        eq(providerTokens.provider, provider),
+        eq(providerTokens.isActive, true)
+      ));
+    return token || undefined;
+  }
+
+  async createProviderToken(token: InsertProviderToken): Promise<ProviderToken> {
+    const tokenData: any = {
+      ...token,
+      organizationAccess: Array.isArray(token.organizationAccess) ? token.organizationAccess : []
+    };
+    
+    const [created] = await db
+      .insert(providerTokens)
+      .values([tokenData])
+      .returning();
+    return created;
+  }
+
+  async updateProviderToken(id: string, updates: Partial<ProviderToken>): Promise<ProviderToken> {
+    const updateData = { ...updates, updatedAt: new Date() };
+    const [updated] = await db
+      .update(providerTokens)
+      .set(updateData)
+      .where(eq(providerTokens.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteProviderToken(id: string): Promise<void> {
+    await db
+      .delete(providerTokens)
+      .where(eq(providerTokens.id, id));
   }
 }
 

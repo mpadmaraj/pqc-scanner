@@ -11,7 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Github, GitBranch, Search, Play, Plus, ExternalLink, AlertCircle, CheckCircle, Clock, Filter, ArrowUpDown, Edit, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Github, GitBranch, Search, Play, Plus, ExternalLink, AlertCircle, CheckCircle, Clock, Filter, ArrowUpDown, Edit, Trash2, Building2, RefreshCw, Settings } from "lucide-react";
+import { SiBitbucket } from "react-icons/si";
+import { GitlabIcon as Gitlab } from "lucide-react";
+import type { ProviderToken } from "@shared/schema";
+import { Link } from "wouter";
 
 export default function ScanRepository() {
   // Add Repository Modal State
@@ -33,6 +38,12 @@ export default function ScanRepository() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   
+  // Organization Import State
+  const [isOrgImportModalOpen, setIsOrgImportModalOpen] = useState(false);
+  const [orgProvider, setOrgProvider] = useState<"github" | "gitlab" | "bitbucket">("github");
+  const [organizationName, setOrganizationName] = useState("");
+  const [isRescanModalOpen, setIsRescanModalOpen] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -47,6 +58,10 @@ export default function ScanRepository() {
 
   const { data: vulnerabilities } = useQuery({
     queryKey: ["/api/vulnerabilities"],
+  });
+
+  const { data: providerTokens = [] } = useQuery({
+    queryKey: ["/api/settings/provider-tokens"],
   });
 
   const availableLanguages = [
@@ -137,6 +152,54 @@ export default function ScanRepository() {
         variant: "destructive",
       });
     }
+  });
+
+  const scanOrganizationMutation = useMutation({
+    mutationFn: async (data: { provider: string; organization: string }) => {
+      const response = await apiRequest("POST", "/api/repositories/scan-organization", data);
+      return await response.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+      setIsOrgImportModalOpen(false);
+      toast({
+        title: "Organization Scan Complete",
+        description: `Found ${result.totalFound} repositories. Imported ${result.imported}, skipped ${result.skipped}.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Organization Scan Failed",
+        description: error instanceof Error ? error.message : "Failed to scan organization",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rescanAllMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/repositories/rescan-all", {});
+      return await response.json();
+    },
+    onSuccess: (results) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+      setIsRescanModalOpen(false);
+      
+      const totalImported = results.reduce((sum: number, result: any) => sum + result.imported, 0);
+      const totalFound = results.reduce((sum: number, result: any) => sum + result.totalFound, 0);
+      
+      toast({
+        title: "Rescan Complete",
+        description: `Rescanned ${results.length} organizations. Found ${totalFound} repositories, imported ${totalImported} new ones.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Rescan Failed",
+        description: error instanceof Error ? error.message : "Failed to rescan repositories",
+        variant: "destructive",
+      });
+    },
   });
 
   // Computed data for table
@@ -510,10 +573,34 @@ export default function ScanRepository() {
               Manage repositories and run PQC vulnerability scans
             </p>
           </div>
-          <Button onClick={() => setIsAddRepoModalOpen(true)} data-testid="button-add-repository">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Repository
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/settings">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+            </Link>
+            <Button 
+              onClick={() => setIsOrgImportModalOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Building2 className="h-4 w-4" />
+              Import Organization
+            </Button>
+            <Button 
+              onClick={() => setIsRescanModalOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Rescan All
+            </Button>
+            <Button onClick={() => setIsAddRepoModalOpen(true)} data-testid="button-add-repository">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Repository
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -941,6 +1028,174 @@ export default function ScanRepository() {
               {createRepositoryMutation.isPending ? "Adding..." : "Add Repository & Start Scan"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Organization Import Modal */}
+      <Dialog open={isOrgImportModalOpen} onOpenChange={setIsOrgImportModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Organization Repositories</DialogTitle>
+            <DialogDescription>
+              Import all repositories from a Git provider organization.
+            </DialogDescription>
+          </DialogHeader>
+
+          {providerTokens.length === 0 ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-amber-600">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">No provider tokens configured</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                You need to add Git provider tokens in Settings before importing organizations.
+              </p>
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setIsOrgImportModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Link to="/settings">
+                  <Button onClick={() => setIsOrgImportModalOpen(false)}>
+                    Go to Settings
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="orgProvider">Git Provider</Label>
+                <Select value={orgProvider} onValueChange={(value: any) => setOrgProvider(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providerTokens.map((token: ProviderToken) => (
+                      <SelectItem key={token.provider} value={token.provider}>
+                        <div className="flex items-center gap-2">
+                          {token.provider === "github" && <Github className="h-4 w-4" />}
+                          {token.provider === "gitlab" && <Gitlab className="h-4 w-4" />}
+                          {token.provider === "bitbucket" && <SiBitbucket className="h-4 w-4" />}
+                          {token.provider.charAt(0).toUpperCase() + token.provider.slice(1)}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="organizationName">Organization Name</Label>
+                <Input
+                  id="organizationName"
+                  value={organizationName}
+                  onChange={(e) => setOrganizationName(e.target.value)}
+                  placeholder="Enter organization or username"
+                />
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setIsOrgImportModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (organizationName.trim()) {
+                      scanOrganizationMutation.mutate({
+                        provider: orgProvider,
+                        organization: organizationName.trim()
+                      });
+                      setOrganizationName("");
+                    }
+                  }}
+                  disabled={!organizationName.trim() || scanOrganizationMutation.isPending}
+                >
+                  {scanOrganizationMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    "Import Repositories"
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Rescan All Modal */}
+      <Dialog open={isRescanModalOpen} onOpenChange={setIsRescanModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rescan All Organizations</DialogTitle>
+            <DialogDescription>
+              This will rescan all configured organizations for new repositories.
+            </DialogDescription>
+          </DialogHeader>
+
+          {providerTokens.length === 0 ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-amber-600">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">No provider tokens configured</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                You need to add Git provider tokens in Settings before rescanning.
+              </p>
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setIsRescanModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Link to="/settings">
+                  <Button onClick={() => setIsRescanModalOpen(false)}>
+                    Go to Settings
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Configured providers:
+                </p>
+                <div className="space-y-1">
+                  {providerTokens.map((token: ProviderToken) => (
+                    <div key={token.id} className="flex items-center gap-2 text-sm">
+                      {token.provider === "github" && <Github className="h-4 w-4" />}
+                      {token.provider === "gitlab" && <Gitlab className="h-4 w-4" />}
+                      {token.provider === "bitbucket" && <SiBitbucket className="h-4 w-4" />}
+                      <span>{token.provider.charAt(0).toUpperCase() + token.provider.slice(1)}</span>
+                      {token.organizationAccess && token.organizationAccess.length > 0 && (
+                        <Badge variant="secondary">{token.organizationAccess.length} orgs</Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setIsRescanModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => rescanAllMutation.mutate()}
+                  disabled={rescanAllMutation.isPending}
+                >
+                  {rescanAllMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Rescanning...
+                    </>
+                  ) : (
+                    "Rescan All"
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

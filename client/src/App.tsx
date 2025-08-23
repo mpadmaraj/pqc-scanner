@@ -10,6 +10,7 @@ import ScanHistory from "@/pages/scan-history";
 import Reports from "@/pages/reports";
 import Integrations from "@/pages/integrations";
 import DeveloperPortal from "@/pages/developer-portal";
+import Settings from "@/pages/settings";
 import CbomManager from "@/pages/cbom-manager";
 import NotFound from "@/pages/not-found";
 
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/reports" component={Reports} />
         <Route path="/integrations" component={Integrations} />
         <Route path="/developer-portal" component={DeveloperPortal} />
+        <Route path="/settings" component={Settings} />
         <Route path="/cbom-manager" component={CbomManager} />
         <Route component={NotFound} />
       </Switch>

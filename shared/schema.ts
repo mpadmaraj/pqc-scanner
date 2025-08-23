@@ -241,3 +241,28 @@ export type InsertVdrReport = z.infer<typeof insertVdrReportSchema>;
 
 export type Integration = typeof integrations.$inferSelect;
 export type InsertIntegration = z.infer<typeof insertIntegrationSchema>;
+
+// Provider tokens table for Git provider authentication
+export const providerTokens = pgTable("provider_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  provider: varchar("provider").notNull(), // github, gitlab, bitbucket
+  tokenType: varchar("token_type").notNull().default("personal_access_token"), // personal_access_token, oauth
+  accessToken: varchar("access_token").notNull(),
+  refreshToken: varchar("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  scopes: varchar("scopes").array(),
+  organizationAccess: jsonb("organization_access").$type<string[]>().default([]), // Organizations the token has access to
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertProviderTokenSchema = createInsertSchema(providerTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ProviderToken = typeof providerTokens.$inferSelect;
+export type InsertProviderToken = z.infer<typeof insertProviderTokenSchema>;
