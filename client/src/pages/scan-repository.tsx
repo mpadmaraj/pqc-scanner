@@ -348,35 +348,51 @@ export default function ScanRepository() {
     if (!repo.scanStatus) {
       return {
         icon: <Clock className="h-4 w-4 text-gray-500" />,
-        text: "Never scanned",
+        dateTime: "Never scanned",
+        status: "",
         className: "text-gray-500"
       };
     }
     
+    const formatDateTime = (dateString: string) => {
+      const date = new Date(dateString);
+      return {
+        date: date.toLocaleDateString(),
+        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+    };
+    
     switch (repo.scanStatus) {
       case 'scanning':
       case 'pending':
+        const startedAt = repo.latestScan?.createdAt ? formatDateTime(repo.latestScan.createdAt) : null;
         return {
           icon: <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>,
-          text: "Scanning...",
+          dateTime: startedAt ? `${startedAt.date} ${startedAt.time}` : "Starting...",
+          status: "Scanning",
           className: "text-blue-600"
         };
       case 'completed':
+        const completedAt = repo.lastScanAt ? formatDateTime(repo.lastScanAt) : null;
         return {
           icon: <CheckCircle className="h-4 w-4 text-green-500" />,
-          text: repo.lastScanAt ? new Date(repo.lastScanAt).toLocaleDateString() : "Completed",
+          dateTime: completedAt ? `${completedAt.date} ${completedAt.time}` : "Completed",
+          status: "Completed",
           className: "text-green-600"
         };
       case 'failed':
+        const failedAt = repo.latestScan?.createdAt ? formatDateTime(repo.latestScan.createdAt) : null;
         return {
           icon: <AlertCircle className="h-4 w-4 text-red-500" />,
-          text: "Failed",
+          dateTime: failedAt ? `${failedAt.date} ${failedAt.time}` : "Failed",
+          status: "Failed",
           className: "text-red-600"
         };
       default:
         return {
           icon: <Clock className="h-4 w-4 text-gray-500" />,
-          text: "Unknown",
+          dateTime: "Unknown",
+          status: "",
           className: "text-gray-500"
         };
     }
@@ -608,29 +624,54 @@ export default function ScanRepository() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className={`flex items-center space-x-2 ${scanStatus.className}`}>
-                              {scanStatus.icon}
-                              <span className="text-sm">{scanStatus.text}</span>
+                            <div className={`space-y-1 ${scanStatus.className}`}>
+                              <div className="flex items-center space-x-2">
+                                {scanStatus.icon}
+                                <span className="text-sm font-medium">{scanStatus.status}</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {scanStatus.dateTime}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${vulnDisplay.bgClass} ${vulnDisplay.className}`}>
-                              {vulnDisplay.count > 0 && (
-                                <button
-                                  onClick={() => {
-                                    // Navigate to vulnerability page - would need to implement navigation
-                                    toast({
-                                      title: "Vulnerability details",
-                                      description: "Would open vulnerability details for this repository",
-                                    });
-                                  }}
-                                  className="hover:underline"
-                                  data-testid={`button-view-vulnerabilities-${repo.id}`}
-                                >
-                                  {vulnDisplay.display}
-                                </button>
+                            <div className="space-y-2">
+                              <div className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${vulnDisplay.bgClass} ${vulnDisplay.className}`}>
+                                {vulnDisplay.count > 0 && (
+                                  <button
+                                    onClick={() => {
+                                      // Navigate to vulnerability page - would need to implement navigation
+                                      toast({
+                                        title: "Vulnerability details",
+                                        description: "Would open vulnerability details for this repository",
+                                      });
+                                    }}
+                                    className="hover:underline"
+                                    data-testid={`button-view-vulnerabilities-${repo.id}`}
+                                  >
+                                    {vulnDisplay.display}
+                                  </button>
+                                )}
+                                {vulnDisplay.count === 0 && vulnDisplay.display}
+                              </div>
+                              {repo.scanStatus === 'completed' && (
+                                <div>
+                                  <button
+                                    onClick={() => {
+                                      // Navigate to scan report - would need to implement navigation
+                                      toast({
+                                        title: "Scan Report",
+                                        description: "Would open detailed scan report for this repository",
+                                      });
+                                    }}
+                                    className="text-xs text-blue-600 hover:underline flex items-center"
+                                    data-testid={`button-view-report-${repo.id}`}
+                                  >
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    View Report
+                                  </button>
+                                </div>
                               )}
-                              {vulnDisplay.count === 0 && vulnDisplay.display}
                             </div>
                           </TableCell>
                           <TableCell>
