@@ -60,15 +60,18 @@ class ScannerService {
   private async prepareRepository(repository: any): Promise<string> {
     const tempDir = path.join(process.cwd(), "temp", repository.id);
     
-    // Clean up existing directory if it exists
+    // Clean up existing directory if it exists with more aggressive cleanup
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
+      // Wait a bit to ensure cleanup is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       // Directory doesn't exist, which is fine
     }
     
-    // Create temp directory
-    await fs.mkdir(tempDir, { recursive: true });
+    // Ensure parent temp directory exists
+    const parentTempDir = path.join(process.cwd(), "temp");
+    await fs.mkdir(parentTempDir, { recursive: true });
     
     if (repository.provider === "github" || repository.provider === "gitlab") {
       // Clone repository
