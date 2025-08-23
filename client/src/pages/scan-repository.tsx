@@ -59,7 +59,8 @@ export default function ScanRepository() {
 
   const createRepositoryMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/repositories", data);
+      const response = await apiRequest("POST", "/api/repositories", data);
+      return await response.json();
     },
     onSuccess: async (newRepo: any) => {
       console.log("Repository created:", newRepo);
