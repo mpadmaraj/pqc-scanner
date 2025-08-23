@@ -7,6 +7,9 @@ import { vdrService } from "./services/vdr";
 import { integrationsService } from "./services/integrations";
 import { initializeDefaultIntegrations } from "./services/integrations";
 import { repositoryImportService } from "./services/repository-import";
+import { pdfGenerator } from "./services/pdf-generator";
+import path from 'path';
+import { promises as fs } from 'fs';
 import { insertRepositorySchema, insertScanSchema, insertVulnerabilitySchema, insertIntegrationSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -190,6 +193,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(cbomReports);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch CBOM reports" });
+    }
+  });
+
+  // Generate and download PDF report
+  app.get("/api/cbom-reports/:scanId/pdf", async (req, res) => {
+    try {
+      const { scanId } = req.params;
+      const report = await storage.getCbomReportByScanId(scanId);
+      
+      if (!report) {
+        return res.status(404).json({ error: "CBOM report not found" });
+      }
+
+      const repository = await storage.getRepository(report.repositoryId);
+      if (!repository) {
+        return res.status(404).json({ error: "Repository not found" });
+      }
+
+      // Check if PDF already exists
+      let pdfPath = report.pdfPath;
+      
+      if (!pdfPath || !(await fs.access(pdfPath).then(() => true).catch(() => false))) {
+        // Generate new PDF
+        pdfPath = await pdfGenerator.generateCBOMPDF(report, repository.name);
+        
+        // Update report with PDF path
+        await storage.updateCbomReport(report.id, { pdfPath });
+      }
+
+      // Set headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="cbom-report-${repository.name}-${scanId}.pdf"`);
+      
+      // Stream the PDF file
+      const pdfBuffer = await fs.readFile(pdfPath);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating PDF report:", error);
+      res.status(500).json({ error: "Failed to generate PDF report" });
     }
   });
 

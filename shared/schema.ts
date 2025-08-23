@@ -92,7 +92,31 @@ export const cbomReports = pgTable("cbom_reports", {
     location: string;
     nistCompliance?: boolean;
   }>>().default([]),
+  pdfPath: varchar("pdf_path"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Library cache for optimization
+export const libraryCache = pgTable("library_cache", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  libraryName: varchar("library_name").notNull(),
+  version: varchar("version").notNull(),
+  language: varchar("language").notNull(),
+  cryptoAssets: jsonb("crypto_assets").notNull(),
+  vulnerabilities: jsonb("vulnerabilities").notNull(),
+  lastScanned: timestamp("last_scanned").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const libraryUsage = pgTable("library_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  repositoryId: varchar("repository_id").notNull(),
+  scanId: varchar("scan_id").notNull(),
+  libraryName: varchar("library_name").notNull(),
+  version: varchar("version").notNull(),
+  language: varchar("language").notNull(),
+  filePath: varchar("file_path").notNull(),
+  detectedAt: timestamp("detected_at").defaultNow(),
 });
 
 export const vdrReports = pgTable("vdr_reports", {

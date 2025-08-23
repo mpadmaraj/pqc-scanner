@@ -48,9 +48,10 @@ export interface IStorage {
   // CBOM operations
   getCbomReport(repositoryId: string): Promise<CbomReport | undefined>;
   createCbomReport(cbom: InsertCbomReport): Promise<CbomReport>;
-  getCBOMReportByScan(scanId: string): Promise<CbomReport | undefined>;
+  getCbomReportByScanId(scanId: string): Promise<CbomReport | undefined>;
   getCBOMReports(filters?: { repositoryId?: string }): Promise<CbomReport[]>;
   createCBOMReport(cbomReport: InsertCbomReport): Promise<CbomReport>;
+  updateCbomReport(id: string, updates: Partial<CbomReport>): Promise<CbomReport>;
 
   // VDR operations
   getVdrReport(vulnerabilityId: string): Promise<VdrReport | undefined>;
@@ -356,7 +357,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getCBOMReportByScan(scanId: string): Promise<CbomReport | undefined> {
+  async getCbomReportByScanId(scanId: string): Promise<CbomReport | undefined> {
     const [cbom] = await db
       .select()
       .from(cbomReports)
@@ -364,6 +365,10 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(cbomReports.createdAt))
       .limit(1);
     return cbom || undefined;
+  }
+
+  async getCBOMReportByScan(scanId: string): Promise<CbomReport | undefined> {
+    return this.getCbomReportByScanId(scanId);
   }
 
   async getCBOMReports(filters?: { repositoryId?: string }): Promise<CbomReport[]> {
@@ -378,6 +383,15 @@ export class DatabaseStorage implements IStorage {
 
   async createCBOMReport(cbomReport: InsertCbomReport): Promise<CbomReport> {
     return await this.createCbomReport(cbomReport);
+  }
+
+  async updateCbomReport(id: string, updates: Partial<CbomReport>): Promise<CbomReport> {
+    const [updated] = await db
+      .update(cbomReports)
+      .set(updates)
+      .where(eq(cbomReports.id, id))
+      .returning();
+    return updated;
   }
 
   // VDR operations

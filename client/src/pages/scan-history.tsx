@@ -156,6 +156,30 @@ export default function ScanHistory() {
     }
   };
 
+  const handleDownloadPDF = async (scanId: string) => {
+    try {
+      const response = await fetch(`/api/cbom-reports/${scanId}/pdf`);
+      if (!response.ok) throw new Error('Failed to generate PDF report');
+      
+      const pdfBlob = await response.blob();
+      const url = URL.createObjectURL(pdfBlob);
+      
+      const scan = scans.find(s => s.id === scanId);
+      const repository = repositories.find(r => r.id === scan?.repositoryId);
+      const fileName = `cbom-report-${repository?.name || 'unknown'}-${scanId}.pdf`;
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF report:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col">
       {/* Header */}
@@ -393,21 +417,39 @@ export default function ScanHistory() {
                                   </Tooltip>
                                 )}
                                 {scan.status === "completed" && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDownloadCBOM(scan.id)}
-                                        data-testid={`button-download-${scan.id}`}
-                                      >
-                                        <Download className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Download CBOM report</p>
-                                    </TooltipContent>
-                                  </Tooltip>
+                                  <>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleDownloadCBOM(scan.id)}
+                                          data-testid={`button-download-${scan.id}`}
+                                        >
+                                          <Download className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Download JSON report</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleDownloadPDF(scan.id)}
+                                          data-testid={`button-download-pdf-${scan.id}`}
+                                          className="text-red-600 hover:text-red-700"
+                                        >
+                                          <FileText className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Download PDF report</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </>
                                 )}
                               </div>
                             </TooltipProvider>
