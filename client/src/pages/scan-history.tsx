@@ -132,6 +132,30 @@ export default function ScanHistory() {
     queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
   };
 
+  // Download CBOM report function
+  const handleDownloadCBOM = async (scanId: string) => {
+    try {
+      const response = await fetch(`/api/cbom-reports/${scanId}`);
+      if (!response.ok) throw new Error('Failed to fetch CBOM report');
+      
+      const cbomData = await response.json();
+      const blob = new Blob([JSON.stringify(cbomData.content, null, 2)], {
+        type: 'application/json'
+      });
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cbom-report-${scanId}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading CBOM report:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col">
       {/* Header */}
@@ -374,13 +398,14 @@ export default function ScanHistory() {
                                       <Button
                                         variant="ghost"
                                         size="sm"
+                                        onClick={() => handleDownloadCBOM(scan.id)}
                                         data-testid={`button-download-${scan.id}`}
                                       >
                                         <Download className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Download scan report</p>
+                                      <p>Download CBOM report</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 )}
@@ -398,36 +423,15 @@ export default function ScanHistory() {
                                     Scan Results - {getRepositoryName(scan.repositoryId)}
                                   </h4>
                                 </div>
-                                <Tabs defaultValue="vulnerabilities" className="w-full">
-                                  <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="vulnerabilities" className="flex items-center gap-2">
-                                      <AlertTriangle className="h-4 w-4" />
-                                      Vulnerabilities ({scanVulnerabilities.length})
-                                    </TabsTrigger>
-                                    <TabsTrigger value="cbom" className="flex items-center gap-2">
-                                      <FileText className="h-4 w-4" />
-                                      CBOM Report
-                                    </TabsTrigger>
-                                  </TabsList>
-                                  <TabsContent value="vulnerabilities" className="mt-4">
-                                    <div className="mb-3">
-                                      <p className="text-xs text-muted-foreground">
-                                        {scanVulnerabilities.length} vulnerabilities found in this scan
-                                      </p>
-                                    </div>
-                                    <VulnerabilityTable 
-                                      vulnerabilities={scanVulnerabilities} 
-                                      showRepository={false}
-                                    />
-                                  </TabsContent>
-                                  <TabsContent value="cbom" className="mt-4">
-                                    <CBOMReportView 
-                                      scanId={scan.id}
-                                      repositoryName={getRepositoryName(scan.repositoryId)}
-                                      reportData={cbomReport}
-                                    />
-                                  </TabsContent>
-                                </Tabs>
+                                <div className="mb-3">
+                                  <p className="text-xs text-muted-foreground">
+                                    {scanVulnerabilities.length} vulnerabilities found in this scan
+                                  </p>
+                                </div>
+                                <VulnerabilityTable 
+                                  vulnerabilities={scanVulnerabilities} 
+                                  showRepository={false}
+                                />
                               </div>
                             </TableCell>
                           </TableRow>

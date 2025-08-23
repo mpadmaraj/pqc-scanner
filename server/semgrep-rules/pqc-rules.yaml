@@ -162,31 +162,55 @@ rules:
       technology: [python]
 
   # ========== JAVASCRIPT/TYPESCRIPT RULES ==========
-  - id: js-rsa-crypto
+  - id: js-rsa-crypto-comprehensive
     languages: [javascript, typescript]
     severity: ERROR
-    message: RSA detected in Node.js crypto. Not post-quantum safe.
+    message: RSA cryptography detected. Not post-quantum safe - vulnerable to Shor's algorithm.
     patterns:
       - pattern: crypto.createSign("RSA-SHA256")
       - pattern: crypto.createSign("RSA-SHA1")
       - pattern: crypto.createVerify("RSA-SHA256")
       - pattern: crypto.generateKeyPair("rsa", ...)
+      - pattern: crypto.publicEncrypt(...)
+      - pattern: crypto.privateDecrypt(...)
+      - pattern: crypto.privateEncrypt(...)
+      - pattern: crypto.publicDecrypt(...)
+      - pattern: |
+          generateKeyPair('rsa', ...)
+      - pattern: |
+          generateKeyPairSync('rsa', ...)
+      - pattern: |
+          crypto.sign('RSA-SHA256', ...)
+      - pattern: |
+          crypto.verify('RSA-SHA256', ...)
     metadata:
       category: security
       subcategory: [crypto]
       technology: [javascript, nodejs]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
 
   - id: js-ecdh-crypto
     languages: [javascript, typescript]
     severity: ERROR
-    message: Elliptic Curve Diffie-Hellman detected. Vulnerable to quantum attacks.
+    message: Elliptic Curve cryptography detected. Vulnerable to quantum attacks using modified Shor's algorithm.
     patterns:
       - pattern: crypto.createECDH(...)
       - pattern: crypto.generateKeyPair("ec", ...)
+      - pattern: crypto.createSign("ecdsa-with-SHA256")
+      - pattern: crypto.createVerify("ecdsa-with-SHA256")
+      - pattern: |
+          generateKeyPair('ec', ...)
+      - pattern: |
+          generateKeyPairSync('ec', ...)
+      - pattern: |
+          crypto.sign('ecdsa-with-SHA256', ...)
+      - pattern: |
+          crypto.verify('ecdsa-with-SHA256', ...)
     metadata:
       category: security
       subcategory: [crypto]
       technology: [javascript, nodejs]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
 
   - id: js-md5-hash
     languages: [javascript, typescript]
@@ -231,10 +255,91 @@ rules:
       - pattern: crypto.createCipheriv("aes-128-ecb", ...)
       - pattern: crypto.createCipheriv("aes-128-cbc", ...)
       - pattern: crypto.createCipheriv("aes-128-gcm", ...)
+      - pattern: crypto.createCipheriv("aes128", ...)
+      - pattern: crypto.createDecipher("aes128", ...)
+      - pattern: crypto.createDecipheriv("aes-128-ecb", ...)
+      - pattern: crypto.createDecipheriv("aes-128-cbc", ...)
+      - pattern: crypto.createDecipheriv("aes-128-gcm", ...)
     metadata:
       category: security
       subcategory: [crypto]
       technology: [javascript, nodejs]
+      cwe: "CWE-326: Inadequate Encryption Strength"
+
+  # New comprehensive crypto library detection rules
+  - id: js-crypto-library-rsa
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: RSA implementation found in crypto library. Consider post-quantum alternatives.
+    patterns:
+      - pattern: require("crypto").generateKeyPair
+      - pattern: require("crypto").publicEncrypt
+      - pattern: require("crypto").privateDecrypt
+      - pattern: require("node-rsa")
+      - pattern: new NodeRSA(...)
+      - pattern: require("jsrsasign")
+      - pattern: require("rsa-pem-from-mod-exp")
+      - pattern: require("keypair")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+
+  - id: js-weak-hash-algorithms
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Weak hash algorithm detected. Use SHA-256, SHA-3, or BLAKE2 instead.
+    patterns:
+      - pattern: crypto.createHash("md5")
+      - pattern: crypto.createHash("sha1")
+      - pattern: crypto.createHash("md4")
+      - pattern: require("md5")
+      - pattern: require("sha1")
+      - pattern: hash.update("md5")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+
+  - id: js-weak-cipher-modes
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Insecure cipher mode or algorithm detected. Avoid ECB mode and weak ciphers.
+    patterns:
+      - pattern: crypto.createCipheriv($CIPHER, ...)
+      - pattern: crypto.createDecipheriv($CIPHER, ...)
+    metavariable-regex:
+      metavariable: $CIPHER
+      regex: '.*(ecb|des|rc4|rc2|blowfish).*'
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+
+  - id: js-hardcoded-crypto-keys
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Hardcoded cryptographic key or password detected.
+    patterns:
+      - pattern: |
+          const $KEY = "$VALUE"
+          ...
+          crypto.createCipheriv(..., $KEY, ...)
+      - pattern: |
+          var $KEY = "$VALUE"
+          ...
+          crypto.createCipheriv(..., $KEY, ...)
+    metavariable-regex:
+      metavariable: $VALUE
+      regex: '^[A-Za-z0-9+/=]{16,}$'
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+      cwe: "CWE-798: Use of Hard-coded Credentials"
 
   # ========== ADDITIONAL QUANTUM-VULNERABLE PATTERNS ==========
   - id: openssl-rsa-commands
