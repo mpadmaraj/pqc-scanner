@@ -9,13 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import VulnerabilityTable from "@/components/vulnerability-table";
 
 export default function ScanHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedScan, setSelectedScan] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const queryClient = useQueryClient();
 
@@ -54,6 +57,17 @@ export default function ScanHistory() {
     const matchesStatus = statusFilter === "all" || scan.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredScans.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedScans = filteredScans.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  const handleFiltersChange = () => {
+    setCurrentPage(1);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -102,6 +116,11 @@ export default function ScanHistory() {
     return repo?.name || "Unknown Repository";
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/scans"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+  };
+
   return (
     <div className="flex flex-col">
       {/* Header */}
@@ -116,7 +135,7 @@ export default function ScanHistory() {
             </p>
           </div>
           <Button
-            onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/scans"] })}
+            onClick={handleRefresh}
             variant="outline"
             data-testid="button-refresh"
           >
@@ -135,12 +154,18 @@ export default function ScanHistory() {
                 <Input
                   placeholder="Search repositories..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    handleFiltersChange();
+                  }}
                   className="w-full"
                   data-testid="input-search"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value) => {
+                setStatusFilter(value);
+                handleFiltersChange();
+              }}>
                 <SelectTrigger className="w-full sm:w-48" data-testid="select-status-filter">
                   <SelectValue />
                 </SelectTrigger>
@@ -165,6 +190,7 @@ export default function ScanHistory() {
             </CardTitle>
             <CardDescription>
               {filteredScans.length} scan{filteredScans.length !== 1 ? 's' : ''} found
+              {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -173,7 +199,7 @@ export default function ScanHistory() {
                 <RefreshCw className="h-6 w-6 animate-spin mr-2" />
                 Loading scan history...
               </div>
-            ) : filteredScans.length === 0 ? (
+            ) : paginatedScans.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No scans found</p>
@@ -194,7 +220,7 @@ export default function ScanHistory() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredScans.map((scan: any) => (
+                    {paginatedScans.map((scan: any) => (
                       <TableRow key={scan.id} data-testid={`scan-row-${scan.id}`}>
                         <TableCell>
                           <div className="font-medium" data-testid={`text-repository-${scan.id}`}>
@@ -264,43 +290,125 @@ export default function ScanHistory() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedScan(
-                                selectedScan === scan.id ? null : scan.id
+                          <TooltipProvider>
+                            <div className="flex items-center space-x-2">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSelectedScan(
+                                      selectedScan === scan.id ? null : scan.id
+                                    )}
+                                    data-testid={`button-view-details-${scan.id}`}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{selectedScan === scan.id ? "Hide details" : "View details"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              {scan.status === "failed" && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => retrySccanMutation.mutate(scan.id)}
+                                      disabled={retrySccanMutation.isPending}
+                                      data-testid={`button-retry-${scan.id}`}
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Retry failed scan</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
-                              data-testid={`button-view-details-${scan.id}`}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {scan.status === "failed" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => retrySccanMutation.mutate(scan.id)}
-                                disabled={retrySccanMutation.isPending}
-                                data-testid={`button-retry-${scan.id}`}
-                              >
-                                <RefreshCw className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {scan.status === "completed" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                data-testid={`button-download-${scan.id}`}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
+                              {scan.status === "completed" && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      data-testid={`button-download-${scan.id}`}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Download scan report</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                          </TooltipProvider>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredScans.length)} of {filteredScans.length} scans
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    data-testid="button-prev-page"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        const diff = Math.abs(page - currentPage);
+                        return diff <= 2 || page === 1 || page === totalPages;
+                      })
+                      .map((page, index, array) => {
+                        const prevPage = array[index - 1];
+                        const showEllipsis = prevPage && page - prevPage > 1;
+                        
+                        return (
+                          <div key={page} className="flex items-center">
+                            {showEllipsis && (
+                              <span className="px-2 text-muted-foreground">...</span>
+                            )}
+                            <Button
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(page)}
+                              className="w-10"
+                              data-testid={`button-page-${page}`}
+                            >
+                              {page}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    data-testid="button-next-page"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
