@@ -5,6 +5,7 @@ import { scannerService } from "./services/scanner";
 import { cbomService } from "./services/cbom";
 import { vdrService } from "./services/vdr";
 import { integrationsService } from "./services/integrations";
+import { initializeDefaultIntegrations } from "./services/integrations";
 import { insertRepositorySchema, insertScanSchema, insertVulnerabilitySchema, insertIntegrationSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -331,6 +332,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/integrations/:id/regenerate-key", async (req, res) => {
+    try {
+      const integration = await storage.getIntegration(req.params.id);
+      if (!integration) {
+        return res.status(404).json({ error: "Integration not found" });
+      }
+      
+      const newApiKey = integrationsService.generateApiKey();
+      const updatedIntegration = await storage.updateIntegration(req.params.id, { apiKey: newApiKey });
+      res.json(updatedIntegration);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to regenerate API key" });
+    }
+  });
+
   app.get("/api/integrations/:id/instructions", async (req, res) => {
     try {
       const integration = await storage.getIntegration(req.params.id);
@@ -354,8 +370,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let testResult = false;
       switch (integration.type) {
         case "github_actions":
-          if (integration.config.apiKey) {
-            testResult = await integrationsService.testGitHubConnection(integration.config.apiKey);
+          if (integration.apiKey) {
+            testResult = await integrationsService.testGitHubConnection(integration.apiKey);
           }
           break;
         case "jenkins":

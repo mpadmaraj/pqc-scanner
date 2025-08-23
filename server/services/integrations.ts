@@ -443,3 +443,52 @@ sonar.externalIssuesReportPaths=pqc-issues.json`;
 }
 
 export const integrationsService = new IntegrationsService();
+
+export async function initializeDefaultIntegrations() {
+  const { storage } = await import("../storage");
+  
+  try {
+    const existingIntegrations = await storage.getIntegrations();
+    
+    const defaultIntegrations = [
+      {
+        name: "GitHub Actions",
+        type: "github_actions",
+        config: { enabled: false },
+        isActive: false
+      },
+      {
+        name: "Jenkins CI/CD",
+        type: "jenkins", 
+        config: { enabled: false },
+        isActive: false
+      },
+      {
+        name: "SonarQube Quality Gate",
+        type: "sonarqube",
+        config: { enabled: false },
+        isActive: false
+      },
+      {
+        name: "API Integration",
+        type: "api_key",
+        config: { enabled: false },
+        isActive: false
+      }
+    ];
+    
+    for (const defaultIntegration of defaultIntegrations) {
+      const exists = existingIntegrations.find(i => i.type === defaultIntegration.type);
+      if (!exists) {
+        const apiKey = integrationsService.generateApiKey();
+        await storage.createIntegration({
+          ...defaultIntegration,
+          apiKey
+        });
+        console.log(`Created default integration: ${defaultIntegration.name}`);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to initialize default integrations:", error);
+  }
+}

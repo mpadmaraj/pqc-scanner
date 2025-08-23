@@ -8,23 +8,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Github, GitlabIcon as Gitlab, Cog, Code, Key, Plus, Settings, CheckCircle, AlertCircle, Copy, Eye, EyeOff, FileText, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Github, GitlabIcon as Gitlab, Cog, Code, Key, Settings, CheckCircle, AlertCircle, Copy, Eye, EyeOff, FileText, Loader2, RefreshCw, ExternalLink, BookOpen, Terminal } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Integrations() {
-  const [newIntegration, setNewIntegration] = useState({
-    name: "",
-    type: "github_actions" as const,
-    config: { enabled: true }
-  });
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [showInstructions, setShowInstructions] = useState(false);
-  const [showApiKey, setShowApiKey] = useState<string | null>(null);
+  const [showApiKey, setShowApiKey] = useState<string | undefined>(undefined);
+  const [regeneratingKey, setRegeneratingKey] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -33,32 +28,10 @@ export default function Integrations() {
     queryKey: ["/api/integrations"],
   });
 
-  const { data: instructionsData, isLoading: instructionsLoading } = useQuery({
+  const { data: instructionsData, isLoading: instructionsLoading } = useQuery<{instructions: string; code: string}>({
     queryKey: ["/api/integrations", selectedIntegration?.id, "instructions"],
     queryFn: () => apiRequest("GET", `/api/integrations/${selectedIntegration?.id}/instructions`),
     enabled: !!selectedIntegration && showInstructions,
-  });
-
-  const createIntegrationMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/integrations", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
-      setIsDialogOpen(false);
-      setNewIntegration({ name: "", type: "github_actions", config: { enabled: true } });
-      toast({
-        title: "Integration added",
-        description: "Integration has been successfully configured with API key generated.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create integration. Please check your configuration.",
-        variant: "destructive",
-      });
-    }
   });
 
   const updateIntegrationMutation = useMutation({
@@ -71,6 +44,29 @@ export default function Integrations() {
         title: "Integration updated",
         description: "Integration settings have been saved.",
       });
+    }
+  });
+
+  const regenerateKeyMutation = useMutation({
+    mutationFn: async (integrationId: string) => {
+      return await apiRequest("POST", `/api/integrations/${integrationId}/regenerate-key`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+      toast({
+        title: "API key regenerated",
+        description: "A new API key has been generated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to regenerate API key. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setRegeneratingKey(null);
     }
   });
 
@@ -105,6 +101,11 @@ export default function Integrations() {
     updateIntegrationMutation.mutate({ id, isActive });
   };
 
+  const handleRegenerateKey = (integrationId: string) => {
+    setRegeneratingKey(integrationId);
+    regenerateKeyMutation.mutate(integrationId);
+  };
+
   const handleCopyApiKey = (apiKey: string) => {
     navigator.clipboard.writeText(apiKey);
     toast({
@@ -129,23 +130,23 @@ export default function Integrations() {
   const getIntegrationIcon = (type: string) => {
     switch (type) {
       case "github_actions":
-        return <Github className="h-5 w-5" />;
+        return <Github className="h-6 w-6" />;
       case "gitlab":
-        return <Gitlab className="h-5 w-5" />;
+        return <Gitlab className="h-6 w-6" />;
       case "jenkins":
-        return <Cog className="h-5 w-5" />;
+        return <Cog className="h-6 w-6" />;
       case "sonarqube":
-        return <Code className="h-5 w-5" />;
+        return <Code className="h-6 w-6" />;
       case "api_key":
-        return <Key className="h-5 w-5" />;
+        return <Key className="h-6 w-6" />;
       default:
-        return <Settings className="h-5 w-5" />;
+        return <Settings className="h-6 w-6" />;
     }
   };
 
   const getStatusBadge = (integration: Integration) => {
     if (!integration.isActive) {
-      return <Badge variant="secondary">Inactive</Badge>;
+      return <Badge variant="secondary">Disabled</Badge>;
     }
     
     const isHealthy = integration.lastUsed ? true : false;
@@ -155,9 +156,9 @@ export default function Integrations() {
         Active
       </Badge>
     ) : (
-      <Badge variant="outline">
+      <Badge variant="outline" className="text-yellow-600 border-yellow-600">
         <AlertCircle className="w-3 h-3 mr-1" />
-        Not Used
+        Enabled
       </Badge>
     );
   };
@@ -179,6 +180,21 @@ export default function Integrations() {
     }
   };
 
+  const getIntegrationDescription = (type: string) => {
+    switch (type) {
+      case "github_actions":
+        return "Automate security scans in your GitHub repository workflows";
+      case "jenkins":
+        return "Integrate PQC scanning into your Jenkins CI/CD pipelines";
+      case "sonarqube":
+        return "Add quantum cryptography insights to your SonarQube quality gates";
+      case "api_key":
+        return "Direct API access for custom integrations and automations";
+      default:
+        return "Configure this integration for your development workflow";
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -196,154 +212,52 @@ export default function Integrations() {
             Connect PQC Scanner with your CI/CD pipelines and development tools
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-integration">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Integration
+        <div className="flex space-x-2">
+          <Link href="/developer-portal">
+            <Button variant="outline" data-testid="button-developer-portal">
+              <Terminal className="h-4 w-4 mr-2" />
+              Developer Portal
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add New Integration</DialogTitle>
-              <DialogDescription>
-                Configure a new integration to automate security scanning in your workflow.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Integration Name</Label>
-                <Input
-                  data-testid="input-integration-name"
-                  id="name"
-                  value={newIntegration.name}
-                  onChange={(e) => setNewIntegration(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="My GitHub Actions Integration"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="type">Integration Type</Label>
-                <select
-                  data-testid="select-integration-type"
-                  id="type"
-                  value={newIntegration.type}
-                  onChange={(e) => setNewIntegration(prev => ({ ...prev, type: e.target.value as any }))}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                >
-                  <option value="github_actions">GitHub Actions</option>
-                  <option value="jenkins">Jenkins</option>
-                  <option value="sonarqube">SonarQube</option>
-                  <option value="api_key">API Key</option>
-                </select>
-              </div>
-              {newIntegration.type === "github_actions" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="repo-url">Repository URL (Optional)</Label>
-                  <Input
-                    data-testid="input-repository-url"
-                    id="repo-url"
-                    placeholder="https://github.com/username/repo"
-                    onChange={(e) => setNewIntegration(prev => ({
-                      ...prev,
-                      config: { ...prev.config, repositoryUrl: e.target.value }
-                    }))}
-                  />
-                </div>
-              )}
-              {newIntegration.type === "jenkins" && (
-                <>
-                  <div className="grid gap-2">
-                    <Label htmlFor="jenkins-url">Jenkins URL</Label>
-                    <Input
-                      data-testid="input-jenkins-url"
-                      id="jenkins-url"
-                      placeholder="https://jenkins.example.com"
-                      onChange={(e) => setNewIntegration(prev => ({
-                        ...prev,
-                        config: { ...prev.config, jenkinsUrl: e.target.value }
-                      }))}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      data-testid="input-username"
-                      id="username"
-                      placeholder="jenkins-user"
-                      onChange={(e) => setNewIntegration(prev => ({
-                        ...prev,
-                        config: { ...prev.config, username: e.target.value }
-                      }))}
-                    />
-                  </div>
-                </>
-              )}
-              {newIntegration.type === "sonarqube" && (
-                <>
-                  <div className="grid gap-2">
-                    <Label htmlFor="sonar-url">SonarQube URL</Label>
-                    <Input
-                      data-testid="input-sonar-url"
-                      id="sonar-url"
-                      placeholder="https://sonar.example.com"
-                      onChange={(e) => setNewIntegration(prev => ({
-                        ...prev,
-                        config: { ...prev.config, sonarUrl: e.target.value }
-                      }))}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="project-key">Project Key</Label>
-                    <Input
-                      data-testid="input-project-key"
-                      id="project-key"
-                      placeholder="my-project-key"
-                      onChange={(e) => setNewIntegration(prev => ({
-                        ...prev,
-                        config: { ...prev.config, projectKey: e.target.value }
-                      }))}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                data-testid="button-create-integration"
-                onClick={() => createIntegrationMutation.mutate(newIntegration)}
-                disabled={!newIntegration.name || createIntegrationMutation.isPending}
-              >
-                {createIntegrationMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                Create Integration
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          </Link>
+          <Button variant="outline" asChild>
+            <a href="https://docs.pqcscanner.dev" target="_blank" rel="noopener noreferrer" data-testid="button-api-docs">
+              <BookOpen className="h-4 w-4 mr-2" />
+              API Documentation
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </a>
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         {integrations.map((integration) => (
           <Card key={integration.id} className="relative">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="flex items-center space-x-2">
-                {getIntegrationIcon(integration.type)}
-                <div>
-                  <CardTitle className="text-sm font-medium" data-testid={`text-integration-name-${integration.id}`}>
-                    {integration.name}
-                  </CardTitle>
-                  <CardDescription>{getIntegrationType(integration.type)}</CardDescription>
+            <CardHeader className="pb-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    {getIntegrationIcon(integration.type)}
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg" data-testid={`text-integration-name-${integration.id}`}>
+                      {integration.name}
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-1">
+                      {getIntegrationDescription(integration.type)}
+                    </CardDescription>
+                  </div>
                 </div>
+                {getStatusBadge(integration)}
               </div>
-              {getStatusBadge(integration)}
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Active</span>
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Enable Integration</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {integration.isActive ? "This integration is currently active" : "Enable to start using this integration"}
+                  </p>
+                </div>
                 <Switch
                   data-testid={`switch-integration-active-${integration.id}`}
                   checked={integration.isActive}
@@ -351,8 +265,24 @@ export default function Integrations() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">API Key</Label>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">API Key</Label>
+                  <Button
+                    data-testid={`button-regenerate-key-${integration.id}`}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRegenerateKey(integration.id)}
+                    disabled={regeneratingKey === integration.id}
+                  >
+                    {regeneratingKey === integration.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                    )}
+                    Regenerate
+                  </Button>
+                </div>
                 <div className="flex items-center space-x-2">
                   <Input
                     data-testid={`input-api-key-${integration.id}`}
@@ -365,7 +295,7 @@ export default function Integrations() {
                     data-testid={`button-toggle-api-key-${integration.id}`}
                     variant="outline"
                     size="icon"
-                    onClick={() => setShowApiKey(showApiKey === integration.id ? null : integration.id)}
+                    onClick={() => setShowApiKey(showApiKey === integration.id ? undefined : integration.id)}
                   >
                     {showApiKey === integration.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -381,8 +311,8 @@ export default function Integrations() {
               </div>
 
               {integration.lastUsed && (
-                <div className="text-xs text-muted-foreground">
-                  Last used: {new Date(integration.lastUsed).toLocaleDateString()}
+                <div className="text-xs text-muted-foreground bg-muted rounded-md p-2">
+                  Last used: {new Date(integration.lastUsed).toLocaleDateString()} at {new Date(integration.lastUsed).toLocaleTimeString()}
                 </div>
               )}
 
@@ -410,7 +340,7 @@ export default function Integrations() {
                   className="flex-1"
                 >
                   <FileText className="h-4 w-4 mr-2" />
-                  Instructions
+                  Setup Guide
                 </Button>
               </div>
             </CardContent>
@@ -418,30 +348,13 @@ export default function Integrations() {
         ))}
       </div>
 
-      {integrations.length === 0 && (
-        <Card className="text-center py-12">
-          <CardHeader>
-            <CardTitle>No integrations configured</CardTitle>
-            <CardDescription>
-              Add your first integration to start automating security scans in your development workflow.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Integration
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Instructions Dialog */}
       <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
         <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               {selectedIntegration && getIntegrationIcon(selectedIntegration.type)}
-              <span>Integration Instructions - {selectedIntegration?.name}</span>
+              <span>Setup Guide - {selectedIntegration?.name}</span>
             </DialogTitle>
             <DialogDescription>
               Follow these steps to complete the integration setup.
@@ -451,7 +364,7 @@ export default function Integrations() {
           {instructionsLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              Loading instructions...
+              Loading setup instructions...
             </div>
           ) : instructionsData ? (
             <Tabs defaultValue="instructions" className="w-full">
@@ -462,7 +375,7 @@ export default function Integrations() {
               
               <TabsContent value="instructions" className="space-y-4">
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <pre className="whitespace-pre-wrap text-sm">{instructionsData.instructions}</pre>
+                  <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg">{instructionsData?.instructions || 'No instructions available'}</pre>
                 </div>
               </TabsContent>
               
@@ -473,14 +386,14 @@ export default function Integrations() {
                     data-testid="button-copy-integration-code"
                     variant="outline"
                     size="sm"
-                    onClick={() => handleCopyCode(instructionsData.code)}
+                    onClick={() => handleCopyCode(instructionsData?.code || '')}
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copy Code
                   </Button>
                 </div>
                 <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
-                  <code>{instructionsData.code}</code>
+                  <code>{instructionsData?.code || 'No code available'}</code>
                 </pre>
               </TabsContent>
             </Tabs>
