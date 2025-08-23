@@ -1,0 +1,3408 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:fa8600bc-d81e-4967-ae30-c6b17d0b008d",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-08-23T08:22:45Z",
+    "properties": [
+      {
+        "name": "gitUrl",
+        "value": "https://github.com/Mastercard/client-encryption-nodejs"
+      },
+      {
+        "name": "revision",
+        "value": "main"
+      },
+      {
+        "name": "commit",
+        "value": "90547a8"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-1bc40069-0813-410c-af91-52f47448f267",
+      "group": "detected-in-utils.js",
+      "name": "SHA-256",
+      "version": "line-316",
+      "description": "JavaScript SHA-256 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/utils/utils.js Line: 316 Code: case \"SHA256\":",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "case \"SHA256\":"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-256"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA-512,SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050221674Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 316,
+            "location": "lib/mcapi/utils/utils.js",
+            "additionalContext": "case \"SHA256\":"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-f30904df-ffc7-4e2f-980d-eb0e5ce3f08b",
+      "group": "detected-in-utils.js",
+      "name": "SHA-256",
+      "version": "line-317",
+      "description": "JavaScript SHA-256 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/utils/utils.js Line: 317 Code: return forge.md.sha256.create();",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "return forge.md.sha256.create();"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-256"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA-512,SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050309671Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 317,
+            "location": "lib/mcapi/utils/utils.js",
+            "additionalContext": "return forge.md.sha256.create();"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-9501a4c3-6945-4281-a07c-b9c816de20ef",
+      "group": "detected-in-utils.js",
+      "name": "SHA-512",
+      "version": "line-319",
+      "description": "JavaScript SHA-512 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/utils/utils.js Line: 319 Code: case \"SHA512\":",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "case \"SHA512\":"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-512"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050369175Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 319,
+            "location": "lib/mcapi/utils/utils.js",
+            "additionalContext": "case \"SHA512\":"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "512",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-7e594a22-15af-4003-86e1-c5b0a2960682",
+      "group": "detected-in-utils.js",
+      "name": "SHA-512",
+      "version": "line-320",
+      "description": "JavaScript SHA-512 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/utils/utils.js Line: 320 Code: return forge.md.sha512.create();",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "return forge.md.sha512.create();"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-512"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050423341Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 320,
+            "location": "lib/mcapi/utils/utils.js",
+            "additionalContext": "return forge.md.sha512.create();"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "512",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-4b17050d-c83b-4f9d-8385-ab8a6011bf74",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "AES-128-CBC",
+      "version": "line-69",
+      "description": "JavaScript AES-128-CBC usage detected Asset Type: Symmetric Cipher File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 69 Code: const cipher = forge.cipher.createCipher(\"AES-CBC\", enc.secretKey);",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const cipher = forge.cipher.createCipher(\"AES-CBC\", enc.secretKey);"
+        },
+        {
+          "name": "assetType",
+          "value": "Symmetric Cipher"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "AES-128-CBC"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2040-2050"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "AES-256"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050478487Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 69,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "const cipher = forge.cipher.createCipher(\"AES-CBC\", enc.secretKey);"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-2fd2c4be-9fa2-4813-8ce1-2184a2497978",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "PUBLIC-KEY",
+      "version": "line-89",
+      "description": "JavaScript PUBLIC-KEY usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 89 Code: encryptedData[this.publicKeyFingerprintFieldName] =",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "encryptedData[this.publicKeyFingerprintFieldName] ="
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "PUBLIC-KEY"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 89,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "encryptedData[this.publicKeyFingerprintFieldName] ="
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "other",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-6685290e-6428-41cf-81bd-d5e6f0fbbf51",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "PRIVATE-KEY",
+      "version": "line-115",
+      "description": "JavaScript PRIVATE-KEY usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 115 Code: const decryptedKey = this.privateKey.decrypt(",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const decryptedKey = this.privateKey.decrypt("
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "PRIVATE-KEY"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 115,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "const decryptedKey = this.privateKey.decrypt("
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "other",
+          "cryptoFunctions": [
+            "decrypt"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-e7289bf4-43a0-4c1f-a319-24494e876d06",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "RSA",
+      "version": "line-117",
+      "description": "JavaScript RSA usage detected Asset Type: Public Key Encryption File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 117 Code: \"RSA-OAEP\",",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "\"RSA-OAEP\","
+        },
+        {
+          "name": "assetType",
+          "value": "Public Key Encryption"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050543250Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 117,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "\"RSA-OAEP\","
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "unknown"
+          ]
+        },
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-7789f9ae-7a7f-49c2-8519-a4528d04bfbb",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "RSA",
+      "version": "line-118",
+      "description": "JavaScript RSA usage detected Asset Type: Public Key Encryption File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 118 Code: createOAEPOptions(\"RSA-OAEP\", oaepHashingAlgorithm)",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "createOAEPOptions(\"RSA-OAEP\", oaepHashingAlgorithm)"
+        },
+        {
+          "name": "assetType",
+          "value": "Public Key Encryption"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050601612Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 118,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "createOAEPOptions(\"RSA-OAEP\", oaepHashingAlgorithm)"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        },
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-ba02dcdb-7764-4c94-a4f4-611e3471577b",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "AES-128-CBC",
+      "version": "line-122",
+      "description": "JavaScript AES-128-CBC usage detected Asset Type: Symmetric Cipher File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 122 Code: const decipher = forge.cipher.createDecipher(\"AES-CBC\", decryptedKey);",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const decipher = forge.cipher.createDecipher(\"AES-CBC\", decryptedKey);"
+        },
+        {
+          "name": "assetType",
+          "value": "Symmetric Cipher"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "AES-128-CBC"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2040-2050"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "AES-256"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050676405Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 122,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "const decipher = forge.cipher.createDecipher(\"AES-CBC\", decryptedKey);"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "cryptoFunctions": [
+            "decrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-8461f6b8-fcc4-471e-a007-8f14371e360b",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "PRNG",
+      "version": "line-151",
+      "description": "JavaScript PRNG usage detected Asset Type: Random Number Generator File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 151 Code: const iv = options[\"iv\"] || forge.random.getBytesSync(16);",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "entropy.source.actual",
+          "value": "UNKNOWN"
+        },
+        {
+          "name": "entropy.detection.confidence",
+          "value": "0.30"
+        },
+        {
+          "name": "quantum.random.source",
+          "value": "UNKNOWN"
+        },
+        {
+          "name": "entropy.detection.language",
+          "value": "JavaScript"
+        },
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const iv = options[\"iv\"] || forge.random.getBytesSync(16);"
+        },
+        {
+          "name": "assetType",
+          "value": "Random Number Generator"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "PRNG"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 151,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "const iv = options[\"iv\"] || forge.random.getBytesSync(16);"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "drbg",
+          "cryptoFunctions": [
+            "keygen"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-f61c6c87-cc82-493a-b6f3-c52255370ab5",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "AES-128",
+      "version": "line-155",
+      "description": "JavaScript AES-128 usage detected Asset Type: Symmetric Cipher File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 155 Code: options[\"secretKey\"] || generateSecretKey(\"AES\", 128, \"SHA-256\");",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "options[\"secretKey\"] || generateSecretKey(\"AES\", 128, \"SHA-256\");"
+        },
+        {
+          "name": "assetType",
+          "value": "Symmetric Cipher"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "AES-128"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2040-2050"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "AES-256"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050735560Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 155,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "options[\"secretKey\"] || generateSecretKey(\"AES\", 128, \"SHA-256\");"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-315997ff-78a0-4d86-a38e-683c66feba18",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "PUBLIC-KEY",
+      "version": "line-158",
+      "description": "JavaScript PUBLIC-KEY usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 158 Code: const encryptedKey = this.encryptionCertificate.publicKey.encrypt(",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const encryptedKey = this.encryptionCertificate.publicKey.encrypt("
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "PUBLIC-KEY"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 158,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "const encryptedKey = this.encryptionCertificate.publicKey.encrypt("
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "other",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-50644886-fbc6-4688-9686-4d91fa54fa1c",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "RSA",
+      "version": "line-160",
+      "description": "JavaScript RSA usage detected Asset Type: Public Key Encryption File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 160 Code: \"RSA-OAEP\",",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "\"RSA-OAEP\","
+        },
+        {
+          "name": "assetType",
+          "value": "Public Key Encryption"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050793944Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 160,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "\"RSA-OAEP\","
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "unknown"
+          ]
+        },
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-0b7912e8-0756-44a6-8932-75ed247fc5c5",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "RSA",
+      "version": "line-161",
+      "description": "JavaScript RSA usage detected Asset Type: Public Key Encryption File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 161 Code: createOAEPOptions(\"RSA-OAEP\", this.oaepHashingAlgorithm)",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "createOAEPOptions(\"RSA-OAEP\", this.oaepHashingAlgorithm)"
+        },
+        {
+          "name": "assetType",
+          "value": "Public Key Encryption"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050845233Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 161,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "createOAEPOptions(\"RSA-OAEP\", this.oaepHashingAlgorithm)"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        },
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-fdf03bc8-3b4f-4316-adbe-1a787728c75d",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "SHA-256",
+      "version": "line-200",
+      "description": "JavaScript SHA-256 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 200 Code: case \"SHA256\":",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "case \"SHA256\":"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-256"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA-512,SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050915466Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 200,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "case \"SHA256\":"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-984e0a95-cc9a-4514-9640-ca3511e8f062",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "SHA-256",
+      "version": "line-201",
+      "description": "JavaScript SHA-256 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 201 Code: return forge.md.sha256.create();",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "return forge.md.sha256.create();"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-256"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA-512,SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.050969016Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 201,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "return forge.md.sha256.create();"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-a74face3-d734-48fc-8b5e-2f058cd0cf21",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "SHA-512",
+      "version": "line-203",
+      "description": "JavaScript SHA-512 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 203 Code: case \"SHA512\":",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "case \"SHA512\":"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-512"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051023600Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 203,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "case \"SHA512\":"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "512",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-cdf64943-3b96-4499-8e8c-8c11945305f3",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "SHA-512",
+      "version": "line-204",
+      "description": "JavaScript SHA-512 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 204 Code: return forge.md.sha512.create();",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "return forge.md.sha512.create();"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-512"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051073690Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 204,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "return forge.md.sha512.create();"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "512",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-ad3f1f09-68cb-4f4c-a471-b51bcb5cb286",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "AES-128",
+      "version": "line-212",
+      "description": "JavaScript AES-128 usage detected Asset Type: Symmetric Cipher File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 212 Code: if (algorithm === \"AES\") {",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "if (algorithm === \"AES\") {"
+        },
+        {
+          "name": "assetType",
+          "value": "Symmetric Cipher"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "AES-128"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2040-2050"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "AES-256"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051131005Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 212,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "if (algorithm === \"AES\") {"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-c75c898e-dd05-47be-8297-88c725c0cf4f",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "PRNG",
+      "version": "line-213",
+      "description": "JavaScript PRNG usage detected Asset Type: Random Number Generator File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/field-level-crypto.js Line: 213 Code: const key = forge.random.getBytesSync(size / 8);",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "entropy.source.actual",
+          "value": "UNKNOWN"
+        },
+        {
+          "name": "entropy.detection.confidence",
+          "value": "0.30"
+        },
+        {
+          "name": "quantum.random.source",
+          "value": "UNKNOWN"
+        },
+        {
+          "name": "entropy.detection.language",
+          "value": "JavaScript"
+        },
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const key = forge.random.getBytesSync(size / 8);"
+        },
+        {
+          "name": "assetType",
+          "value": "Random Number Generator"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "PRNG"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 213,
+            "location": "lib/mcapi/crypto/field-level-crypto.js",
+            "additionalContext": "const key = forge.random.getBytesSync(size / 8);"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "drbg",
+          "cryptoFunctions": [
+            "keygen"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-e38b517d-7e69-417f-b53c-7e744f2fce2c",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "RSA",
+      "version": "line-42",
+      "description": "JavaScript RSA usage detected Asset Type: Public Key Encryption File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 42 Code: alg: \"RSA-OAEP-256\",",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "alg: \"RSA-OAEP-256\","
+        },
+        {
+          "name": "assetType",
+          "value": "Public Key Encryption"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051192301Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 42,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "alg: \"RSA-OAEP-256\","
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "unknown"
+          ]
+        },
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-3d7f0ea5-76e7-4e9b-b189-e6b782281b6b",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "NodeCrypto-Random",
+      "version": "line-52",
+      "description": "JavaScript NodeCrypto-Random usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 52 Code: const secretKey = nodeCrypto.randomBytes(32);",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "entropy.source.actual",
+          "value": "UNKNOWN"
+        },
+        {
+          "name": "entropy.detection.confidence",
+          "value": "0.30"
+        },
+        {
+          "name": "quantum.random.source",
+          "value": "UNKNOWN"
+        },
+        {
+          "name": "entropy.detection.language",
+          "value": "JavaScript"
+        },
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const secretKey = nodeCrypto.randomBytes(32);"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "NodeCrypto-Random"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 52,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "const secretKey = nodeCrypto.randomBytes(32);"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "drbg",
+          "cryptoFunctions": [
+            "decrypt"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-c1288ef5-4157-46d1-a4d7-01bdf03ab416",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "PUBLIC-KEY",
+      "version": "line-55",
+      "description": "JavaScript PUBLIC-KEY usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 55 Code: const encryptedSecretKey = nodeCrypto.publicEncrypt(",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const encryptedSecretKey = nodeCrypto.publicEncrypt("
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "PUBLIC-KEY"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 55,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "const encryptedSecretKey = nodeCrypto.publicEncrypt("
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "other",
+          "cryptoFunctions": [
+            "unknown"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-14dd4c0f-7e15-4212-a37e-1203f07e6e2c",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "SHA-256",
+      "version": "line-59",
+      "description": "JavaScript SHA-256 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 59 Code: oaepHash: \"sha256\",",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "oaepHash: \"sha256\","
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-256"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA-512,SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051281870Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 59,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "oaepHash: \"sha256\","
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-80b55209-9f9c-4269-b948-c7357bfa1bd7",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "NodeCrypto-Random",
+      "version": "line-64",
+      "description": "JavaScript NodeCrypto-Random usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 64 Code: const iv = nodeCrypto.randomBytes(16);",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "entropy.source.actual",
+          "value": "UNKNOWN"
+        },
+        {
+          "name": "entropy.detection.confidence",
+          "value": "0.30"
+        },
+        {
+          "name": "quantum.random.source",
+          "value": "UNKNOWN"
+        },
+        {
+          "name": "entropy.detection.language",
+          "value": "JavaScript"
+        },
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const iv = nodeCrypto.randomBytes(16);"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "NodeCrypto-Random"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 64,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "const iv = nodeCrypto.randomBytes(16);"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "drbg",
+          "cryptoFunctions": [
+            "decrypt"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-9b2bb313-3f03-4b03-826d-533c39ba87f9",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "NodeCrypto-Cipher",
+      "version": "line-66",
+      "description": "JavaScript NodeCrypto-Cipher usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 66 Code: const cipher = nodeCrypto.createCipheriv(\"AES-256-GCM\", secretKey, iv);",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const cipher = nodeCrypto.createCipheriv(\"AES-256-GCM\", secretKey, iv);"
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "NodeCrypto-Cipher"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 66,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "const cipher = nodeCrypto.createCipheriv(\"AES-256-GCM\", secretKey, iv);"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "decrypt"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-ba3f9304-b886-4ed6-b65e-3d37fb88851e",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "PRIVATE-KEY",
+      "version": "line-113",
+      "description": "JavaScript PRIVATE-KEY usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 113 Code: let secretKey = nodeCrypto.privateDecrypt(",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "let secretKey = nodeCrypto.privateDecrypt("
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "PRIVATE-KEY"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 113,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "let secretKey = nodeCrypto.privateDecrypt("
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "other",
+          "cryptoFunctions": [
+            "decrypt"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-498e5b61-deae-4236-8758-938ef22f507f",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "SHA-256",
+      "version": "line-117",
+      "description": "JavaScript SHA-256 usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 117 Code: oaepHash: \"sha256\",",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "oaepHash: \"sha256\","
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-256"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Strong"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA-512,SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051358944Z"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 117,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "oaepHash: \"sha256\","
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "js-crypto-723cc145-a071-40cd-a2b5-db578f4f5ae5",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "NodeCrypto-Decipher",
+      "version": "line-146",
+      "description": "JavaScript NodeCrypto-Decipher usage detected Asset Type: Cryptographic Algorithm File: /home/quarkus/.qcbom/aac7a395cccd45d89d21852b982eda13/lib/mcapi/crypto/jwe-crypto.js Line: 146 Code: const decipher = nodeCrypto.createDecipheriv(",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "detectionMethod",
+          "value": "static-analysis"
+        },
+        {
+          "name": "language",
+          "value": "javascript"
+        },
+        {
+          "name": "toolName",
+          "value": "JavaScript Crypto Scanner"
+        },
+        {
+          "name": "sourceCode",
+          "value": "const decipher = nodeCrypto.createDecipheriv("
+        },
+        {
+          "name": "assetType",
+          "value": "Cryptographic Algorithm"
+        },
+        {
+          "name": "algorithm.identifier",
+          "value": "NodeCrypto-Decipher"
+        },
+        {
+          "name": "securityLevel",
+          "value": "Adequate"
+        },
+        {
+          "name": "postQuantum",
+          "value": "false"
+        },
+        {
+          "name": "quantumReadiness",
+          "value": "CLASSICAL"
+        }
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "offset": 0,
+            "line": 146,
+            "location": "lib/mcapi/crypto/jwe-crypto.js",
+            "additionalContext": "const decipher = nodeCrypto.createDecipheriv("
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "decrypt"
+          ]
+        }
+      },
+      "complianceLevel": "WARNING",
+      "quantumSafe": false,
+      "riskLevel": "HIGH"
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-sha256-e2dc7a0f-9a6d-48a8-8a75-d4fa79f7d743",
+      "group": "detected-in-utils.js",
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-256"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "256 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "hash"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "SHA-256"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA-512,SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051419187Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-sha512-1a49e6ba-e68b-413f-9cfb-04bde34fa605",
+      "group": "detected-in-utils.js",
+      "name": "SHA-512",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "SHA-512"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "512 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "hash"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "SHA-512"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2050+"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "LOW"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "SHA3-512"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051474604Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-aes-6d0edc0c-e669-4abb-84ea-795b76323907",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "AES",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "AES"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "128 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "block-cipher"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "AES-128-CBC"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2040-2050"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "AES-256"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051539974Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-rsa-c6a66f7b-6184-46bf-b26f-096539439421",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "2048 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "pke"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "RSA"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051597180Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-rsa-e9749d8c-cad4-4c22-805a-97830f4157a0",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "2048 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "pke"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "RSA"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051649603Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-aes-3f898755-f52a-44d0-8bbb-22f4ef1c9534",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "AES",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "AES"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "128 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "block-cipher"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "AES-128-CBC"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2040-2050"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "AES-256"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051703438Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-aes-54f8f2d1-2d60-45fd-b1dd-b0f5033a0dc7",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "AES",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "AES"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "128 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "block-cipher"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "AES-128"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2040-2050"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "AES-256"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051755305Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-rsa-fcf7b4f1-eaf1-450e-b6b1-29827d999a8c",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "2048 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "pke"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "RSA"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051810419Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-rsa-32736775-47c6-499d-bf03-a304238fc914",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "2048 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "pke"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "RSA"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051860188Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-aes-be11c4ea-ccfd-40b0-ad8e-9147df81d2df",
+      "group": "detected-in-field-level-crypto.js",
+      "name": "AES",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "AES"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "128 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "block-cipher"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "AES-128"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "GROVER_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2040-2050"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "MEDIUM"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "AES-256"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051926347Z"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "crypto-rsa-dbd3303b-a184-425d-b6db-5bbaeb623bd6",
+      "group": "detected-in-jwe-crypto.js",
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "algorithm.identifier",
+          "value": "RSA"
+        },
+        {
+          "name": "algorithm.bit.strength",
+          "value": "2048 bit security level"
+        },
+        {
+          "name": "crypto.primitive",
+          "value": "pke"
+        },
+        {
+          "name": "type",
+          "value": "cryptographic-asset"
+        },
+        {
+          "name": "detected.from",
+          "value": "RSA"
+        },
+        {
+          "name": "quantum.vulnerability.type",
+          "value": "SHOR_VULNERABLE"
+        },
+        {
+          "name": "quantum.vulnerability.timeline",
+          "value": "2030-2035"
+        },
+        {
+          "name": "quantum.migration.priority",
+          "value": "HIGH"
+        },
+        {
+          "name": "quantum.threat.level",
+          "value": "CRITICAL"
+        },
+        {
+          "name": "quantum.safe.alternative",
+          "value": "ML-KEM,CRYSTALS-Kyber,FrodoKEM"
+        },
+        {
+          "name": "vdr.generated.timestamp",
+          "value": "2025-08-23T08:22:46.051976595Z"
+        }
+      ]
+    }
+  ],
+  "dependencies": [],
+  "vulnerabilities": [
+    {
+      "bom-ref": "quantum-vuln-sha-256-cc8719d9-2ca9-447f-b504-5758bebd3ccc",
+      "id": "QUANTUM-SHA-256-001",
+      "source": {
+        "name": "QCBOM Quantum Vulnerability Database",
+        "url": "https://qcbom.synergyquantum.in/vulnerabilities"
+      },
+      "ratings": [
+        {
+          "severity": "low",
+          "method": "other",
+          "vector": "Quantum Threat Level: LOW"
+        }
+      ],
+      "description": "SHA-256 is vulnerable to quantum attacks. Vulnerable to Grover's algorithm (key search). Expected timeline: 2050+",
+      "created": "2025-08-23T08:22:46Z",
+      "analysis": {
+        "state": "in_triage",
+        "justification": "requires_configuration",
+        "response": [
+          "update"
+        ],
+        "detail": "Algorithm: SHA-256 VEX Status: The vulnerability is being investigated Component: SHA-256 Quantum Threat Type: Vulnerable to Grover's algorithm (key search) Expected Timeline: 2050+ Migration Priority: LOW Recommended Alternatives: SHA-512, SHA3-512"
+      },
+      "affects": [
+        {
+          "ref": "js-crypto-1bc40069-0813-410c-af91-52f47448f267"
+        },
+        {
+          "ref": "js-crypto-f30904df-ffc7-4e2f-980d-eb0e5ce3f08b"
+        },
+        {
+          "ref": "js-crypto-fdf03bc8-3b4f-4316-adbe-1a787728c75d"
+        },
+        {
+          "ref": "js-crypto-984e0a95-cc9a-4514-9640-ca3511e8f062"
+        },
+        {
+          "ref": "js-crypto-14dd4c0f-7e15-4212-a37e-1203f07e6e2c"
+        },
+        {
+          "ref": "js-crypto-498e5b61-deae-4236-8758-938ef22f507f"
+        },
+        {
+          "ref": "crypto-sha256-e2dc7a0f-9a6d-48a8-8a75-d4fa79f7d743"
+        }
+      ]
+    },
+    {
+      "bom-ref": "quantum-vuln-sha-512-3c16c70a-5ac9-4a88-8315-b5e1377cb7e3",
+      "id": "QUANTUM-SHA-512-001",
+      "source": {
+        "name": "QCBOM Quantum Vulnerability Database",
+        "url": "https://qcbom.synergyquantum.in/vulnerabilities"
+      },
+      "ratings": [
+        {
+          "severity": "low",
+          "method": "other",
+          "vector": "Quantum Threat Level: LOW"
+        }
+      ],
+      "description": "SHA-512 is vulnerable to quantum attacks. Vulnerable to Grover's algorithm (key search). Expected timeline: 2050+",
+      "created": "2025-08-23T08:22:46Z",
+      "analysis": {
+        "state": "exploitable",
+        "justification": "requires_configuration",
+        "response": [
+          "update"
+        ],
+        "detail": "Algorithm: SHA-512 VEX Status: Partial mitigation measures are in place Component: SHA-512 Quantum Threat Type: Vulnerable to Grover's algorithm (key search) Expected Timeline: 2050+ Migration Priority: LOW Mitigation measures detected. Full migration to post-quantum algorithms still recommended. Recommended Alternatives: SHA3-512"
+      },
+      "affects": [
+        {
+          "ref": "js-crypto-9501a4c3-6945-4281-a07c-b9c816de20ef"
+        },
+        {
+          "ref": "js-crypto-7e594a22-15af-4003-86e1-c5b0a2960682"
+        },
+        {
+          "ref": "js-crypto-a74face3-d734-48fc-8b5e-2f058cd0cf21"
+        },
+        {
+          "ref": "js-crypto-cdf64943-3b96-4499-8e8c-8c11945305f3"
+        },
+        {
+          "ref": "crypto-sha512-1a49e6ba-e68b-413f-9cfb-04bde34fa605"
+        }
+      ]
+    },
+    {
+      "bom-ref": "quantum-vuln-aes-128-16107738-efe4-469f-9a1e-f715f65189f2",
+      "id": "QUANTUM-AES-128-001",
+      "source": {
+        "name": "QCBOM Quantum Vulnerability Database",
+        "url": "https://qcbom.synergyquantum.in/vulnerabilities"
+      },
+      "ratings": [
+        {
+          "severity": "medium",
+          "method": "other",
+          "vector": "Quantum Threat Level: MEDIUM"
+        }
+      ],
+      "description": "AES-128 is vulnerable to quantum attacks. Vulnerable to Grover's algorithm (key search). Expected timeline: 2040-2050",
+      "created": "2025-08-23T08:22:46Z",
+      "analysis": {
+        "state": "exploitable",
+        "justification": "requires_configuration",
+        "response": [
+          "update"
+        ],
+        "detail": "Algorithm: AES-128 VEX Status: The vulnerability is exploitable in this context Component: AES-128-CBC Quantum Threat Type: Vulnerable to Grover's algorithm (key search) Expected Timeline: 2040-2050 Migration Priority: MEDIUM Recommended Alternatives: AES-256"
+      },
+      "affects": [
+        {
+          "ref": "js-crypto-4b17050d-c83b-4f9d-8385-ab8a6011bf74"
+        },
+        {
+          "ref": "js-crypto-ba02dcdb-7764-4c94-a4f4-611e3471577b"
+        },
+        {
+          "ref": "js-crypto-f61c6c87-cc82-493a-b6f3-c52255370ab5"
+        },
+        {
+          "ref": "js-crypto-ad3f1f09-68cb-4f4c-a471-b51bcb5cb286"
+        }
+      ]
+    },
+    {
+      "bom-ref": "quantum-vuln-rsa-4268a818-9001-4a24-866b-4b316aa690d3",
+      "id": "QUANTUM-RSA-001",
+      "source": {
+        "name": "QCBOM Quantum Vulnerability Database",
+        "url": "https://qcbom.synergyquantum.in/vulnerabilities"
+      },
+      "ratings": [
+        {
+          "severity": "critical",
+          "method": "other",
+          "vector": "Quantum Threat Level: HIGH"
+        }
+      ],
+      "description": "RSA is vulnerable to quantum attacks. Vulnerable to Shor's algorithm (factorization/discrete log). Expected timeline: 2030-2035",
+      "created": "2025-08-23T08:22:46Z",
+      "analysis": {
+        "state": "exploitable",
+        "justification": "requires_configuration",
+        "response": [
+          "update"
+        ],
+        "detail": "Algorithm: RSA VEX Status: The vulnerability is exploitable in this context Component: RSA Quantum Threat Type: Vulnerable to Shor's algorithm (factorization/discrete log) Expected Timeline: 2030-2035 Migration Priority: HIGH Recommended Alternatives: ML-KEM, CRYSTALS-Kyber, FrodoKEM"
+      },
+      "affects": [
+        {
+          "ref": "js-crypto-e7289bf4-43a0-4c1f-a319-24494e876d06"
+        },
+        {
+          "ref": "js-crypto-7789f9ae-7a7f-49c2-8519-a4528d04bfbb"
+        },
+        {
+          "ref": "js-crypto-50644886-fbc6-4688-9686-4d91fa54fa1c"
+        },
+        {
+          "ref": "js-crypto-0b7912e8-0756-44a6-8932-75ed247fc5c5"
+        },
+        {
+          "ref": "js-crypto-e38b517d-7e69-417f-b53c-7e744f2fce2c"
+        },
+        {
+          "ref": "crypto-rsa-c6a66f7b-6184-46bf-b26f-096539439421"
+        },
+        {
+          "ref": "crypto-rsa-e9749d8c-cad4-4c22-805a-97830f4157a0"
+        },
+        {
+          "ref": "crypto-rsa-fcf7b4f1-eaf1-450e-b6b1-29827d999a8c"
+        },
+        {
+          "ref": "crypto-rsa-32736775-47c6-499d-bf03-a304238fc914"
+        },
+        {
+          "ref": "crypto-rsa-dbd3303b-a184-425d-b6db-5bbaeb623bd6"
+        }
+      ]
+    },
+    {
+      "bom-ref": "quantum-vuln-aes-1bef56c6-4f5b-4bc4-960c-2eaf0a99d02c",
+      "id": "QUANTUM-AES-001",
+      "source": {
+        "name": "QCBOM Quantum Vulnerability Database",
+        "url": "https://qcbom.synergyquantum.in/vulnerabilities"
+      },
+      "ratings": [
+        {
+          "severity": "medium",
+          "method": "other",
+          "vector": "Quantum Threat Level: MEDIUM"
+        }
+      ],
+      "description": "AES is vulnerable to quantum attacks. Vulnerable to Grover's algorithm (key search). Expected timeline: 2040-2050",
+      "created": "2025-08-23T08:22:46Z",
+      "analysis": {
+        "state": "exploitable",
+        "justification": "requires_configuration",
+        "response": [
+          "update"
+        ],
+        "detail": "Algorithm: AES VEX Status: The vulnerability is exploitable in this context Component: AES Quantum Threat Type: Vulnerable to Grover's algorithm (key search) Expected Timeline: 2040-2050 Migration Priority: MEDIUM Recommended Alternatives: AES-256"
+      },
+      "affects": [
+        {
+          "ref": "crypto-aes-6d0edc0c-e669-4abb-84ea-795b76323907"
+        },
+        {
+          "ref": "crypto-aes-3f898755-f52a-44d0-8bbb-22f4ef1c9534"
+        },
+        {
+          "ref": "crypto-aes-54f8f2d1-2d60-45fd-b1dd-b0f5033a0dc7"
+        },
+        {
+          "ref": "crypto-aes-be11c4ea-ccfd-40b0-ad8e-9147df81d2df"
+        }
+      ]
+    }
+  ]
+}

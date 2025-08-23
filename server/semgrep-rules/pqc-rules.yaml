@@ -266,6 +266,60 @@ rules:
       technology: [javascript, nodejs]
       cwe: "CWE-326: Inadequate Encryption Strength"
 
+  # Forge.js crypto library detection (based on professional CBOM report)
+  - id: js-forge-crypto-sha
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: SHA-256/SHA-512 detected using Forge.js. Grover-vulnerable - consider SHA-3 alternatives.
+    patterns:
+      - pattern: forge.md.sha256.create()
+      - pattern: forge.md.sha512.create()
+      - pattern: forge.md.sha1.create()
+      - pattern: forge.md.md5.create()
+      - pattern: case "SHA256":
+      - pattern: case "SHA512":
+      - pattern: case "SHA1":
+      - pattern: case "MD5":
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs, forge]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+
+  - id: js-forge-aes-cipher
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: AES cipher detected using Forge.js. AES-128 is Grover-vulnerable - consider AES-256 or PQC.
+    patterns:
+      - pattern: forge.cipher.createCipher("AES-CBC", ...)
+      - pattern: forge.cipher.createCipher("AES-ECB", ...)
+      - pattern: forge.cipher.createCipher("AES-GCM", ...)
+      - pattern: forge.cipher.createDecipher("AES-CBC", ...)
+      - pattern: forge.cipher.createDecipher("AES-ECB", ...)
+      - pattern: forge.cipher.createDecipher("AES-GCM", ...)
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs, forge]
+      cwe: "CWE-326: Inadequate Encryption Strength"
+
+  - id: js-forge-rsa-operations
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: RSA operations detected using Forge.js. Vulnerable to Shor's quantum algorithm.
+    patterns:
+      - pattern: forge.pki.rsa.generateKeyPair(...)
+      - pattern: forge.pki.publicKeyFromPem(...)
+      - pattern: forge.pki.privateKeyFromPem(...)
+      - pattern: forge.pki.rsa.encrypt(...)
+      - pattern: forge.pki.rsa.decrypt(...)
+      - pattern: forge.md.sha256.create()
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs, forge]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+
   # New comprehensive crypto library detection rules
   - id: js-crypto-library-rsa
     languages: [javascript, typescript]
@@ -317,6 +371,45 @@ rules:
       category: security
       subcategory: [crypto]
       technology: [javascript, nodejs]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+
+  # Additional patterns based on CBOM professional report
+  - id: js-crypto-algorithm-cases
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: Cryptographic algorithm case statement detected. Review quantum readiness.
+    patterns:
+      - pattern: |
+          switch (...) {
+            ...
+            case "$ALG":
+            ...
+          }
+      - pattern: |
+          case "$ALG":
+    metavariable-regex:
+      metavariable: $ALG
+      regex: '(SHA1|SHA256|SHA512|MD5|AES|DES|RSA|ECDSA|ECDH)'
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs]
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+
+  - id: js-forge-library-import
+    languages: [javascript, typescript]
+    severity: INFO
+    message: Forge.js cryptographic library detected. Review all crypto operations for quantum readiness.
+    patterns:
+      - pattern: require("node-forge")
+      - pattern: import $X from "node-forge"
+      - pattern: import { $X } from "node-forge"
+      - pattern: const forge = require("node-forge")
+      - pattern: var forge = require("node-forge")
+    metadata:
+      category: security
+      subcategory: [crypto]
+      technology: [javascript, nodejs, forge]
       cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
 
   - id: js-hardcoded-crypto-keys
