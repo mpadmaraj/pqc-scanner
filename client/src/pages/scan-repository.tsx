@@ -804,12 +804,49 @@ export default function ScanRepository() {
                               {repo.scanStatus === 'completed' && (
                                 <div>
                                   <button
-                                    onClick={() => {
-                                      // Navigate to scan report - would need to implement navigation
-                                      toast({
-                                        title: "Scan Report",
-                                        description: "Would open detailed scan report for this repository",
-                                      });
+                                    onClick={async () => {
+                                      try {
+                                        // Find the latest completed scan for this repository
+                                        const repoScans = scans.filter(s => s.repositoryId === repo.id && s.status === 'completed');
+                                        if (repoScans.length === 0) {
+                                          toast({
+                                            title: "No Report Available",
+                                            description: "No completed scans found for this repository",
+                                            variant: "destructive",
+                                          });
+                                          return;
+                                        }
+                                        
+                                        const latestScan = repoScans[repoScans.length - 1];
+                                        const response = await fetch(`/api/cbom-reports/${latestScan.id}/pdf`);
+                                        
+                                        if (!response.ok) {
+                                          throw new Error('Failed to generate PDF report');
+                                        }
+                                        
+                                        const pdfBlob = await response.blob();
+                                        const url = URL.createObjectURL(pdfBlob);
+                                        
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `cbom-report-${repo.name}-${latestScan.id}.pdf`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                        URL.revokeObjectURL(url);
+                                        
+                                        toast({
+                                          title: "Report Downloaded",
+                                          description: "PDF report downloaded successfully",
+                                        });
+                                      } catch (error) {
+                                        console.error('Error downloading report:', error);
+                                        toast({
+                                          title: "Download Failed",
+                                          description: "Failed to download scan report",
+                                          variant: "destructive",
+                                        });
+                                      }
                                     }}
                                     className="text-xs text-blue-600 hover:underline flex items-center"
                                     data-testid={`button-view-report-${repo.id}`}

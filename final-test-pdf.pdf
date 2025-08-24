@@ -1,94 +1,10 @@
-import htmlPdf from 'html-pdf-node';
-import { CbomReport } from '@shared/schema';
 
-export class PDFGeneratorService {
-  async generateCBOMPDF(cbomReport: CbomReport, repositoryName: string): Promise<Buffer> {
-    try {
-      // Parse CBOM content
-      const content = cbomReport.content as any;
-      const components = content.components || [];
-      
-      // Calculate summary statistics from components
-      const totalAssets = components.length;
-      const quantumSafeAssets = components.filter((asset: any) => asset.quantumSafe === true).length;
-      const quantumVulnerableAssets = components.filter((asset: any) => asset.quantumSafe === false).length;
-      const unknownAssets = totalAssets - quantumSafeAssets - quantumVulnerableAssets;
-      
-      // Calculate compliance score
-      const complianceScore = totalAssets > 0 ? Math.round((quantumSafeAssets / totalAssets) * 100) : 0;
-      const complianceStatus = complianceScore >= 80 ? 'compliant' : complianceScore >= 50 ? 'warning' : 'non-compliant';
-      
-      // Generate HTML content
-      const html = this.generateHTML({
-        repository: { name: repositoryName, provider: 'Git' },
-        scanId: cbomReport.scanId,
-        timestamp: new Date(cbomReport.createdAt).toLocaleDateString(),
-        summary: { totalAssets, quantumSafe: quantumSafeAssets, quantumVulnerable: quantumVulnerableAssets, unknown: unknownAssets },
-        compliance: { 
-          status: complianceStatus, 
-          score: complianceScore, 
-          details: `${quantumSafeAssets} out of ${totalAssets} cryptographic assets are quantum-safe` 
-        },
-        assets: components.map((asset: any) => ({
-          name: asset.name || 'Unknown',
-          type: asset.type || 'cryptographic-asset',
-          primitive: asset.cryptoProperties?.algorithmProperties?.primitive || 'Unknown',
-          location: asset.evidence?.occurrences?.[0]?.location || 'Unknown',
-          quantumSafe: asset.quantumSafe ? 'Yes' : 'No',
-          quantumSafeClass: asset.quantumSafe ? 'quantum-safe' : 'quantum-vulnerable',
-          severity: asset.riskLevel || 'Unknown'
-        }))
-      });
-
-      // Generate simple text-based PDF content
-      const pdfContent = this.generateSimplePDF({
-        repository: { name: repositoryName },
-        scanId: cbomReport.scanId,
-        timestamp: new Date(cbomReport.createdAt).toLocaleDateString(),
-        summary: { totalAssets, quantumSafe: quantumSafeAssets, quantumVulnerable: quantumVulnerableAssets, unknown: unknownAssets },
-        compliance: { 
-          status: complianceStatus, 
-          score: complianceScore, 
-          details: `${quantumSafeAssets} out of ${totalAssets} cryptographic assets are quantum-safe` 
-        },
-        assets: components.map((asset: any) => ({
-          name: asset.name || 'Unknown',
-          type: asset.type || 'cryptographic-asset',
-          primitive: asset.cryptoProperties?.algorithmProperties?.primitive || 'Unknown',
-          location: asset.evidence?.occurrences?.[0]?.location || 'Unknown',
-          quantumSafe: asset.quantumSafe ? 'Yes' : 'No',
-          severity: asset.riskLevel || 'Unknown'
-        }))
-      });
-      
-      return Buffer.from(pdfContent, 'utf8');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      throw new Error('Failed to generate PDF report');
-    }
-  }
-
-  private generateHTML(data: any): string {
-    const { repository, scanId, timestamp, summary, compliance, assets } = data;
-    
-    const assetsTableRows = assets.map((asset: any) => `
-      <tr>
-        <td><strong>${asset.name}</strong></td>
-        <td>${asset.type}</td>
-        <td>${asset.primitive}</td>
-        <td><code>${asset.location}</code></td>
-        <td><span class="${asset.quantumSafeClass}">${asset.quantumSafe}</span></td>
-        <td><span class="severity-${asset.severity}">${asset.severity}</span></td>
-      </tr>
-    `).join('');
-
-    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBOM Report - ${repository.name}</title>
+    <title>CBOM Report - client-encryption-nodejs</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -317,19 +233,19 @@ export class PDFGeneratorService {
     <div class="meta-info">
         <div class="meta-item">
             <div class="meta-label">Repository</div>
-            <div class="meta-value">${repository.name}</div>
+            <div class="meta-value">client-encryption-nodejs</div>
         </div>
         <div class="meta-item">
             <div class="meta-label">Scan ID</div>
-            <div class="meta-value">${scanId}</div>
+            <div class="meta-value">c04517d4-00cf-41b6-ae6a-681c8bc86a56</div>
         </div>
         <div class="meta-item">
             <div class="meta-label">Generated</div>
-            <div class="meta-value">${timestamp}</div>
+            <div class="meta-value">8/24/2025</div>
         </div>
         <div class="meta-item">
             <div class="meta-label">Provider</div>
-            <div class="meta-value">${repository.provider}</div>
+            <div class="meta-value">Git</div>
         </div>
     </div>
     
@@ -337,161 +253,39 @@ export class PDFGeneratorService {
     
     <div class="summary-grid">
         <div class="summary-card safe">
-            <div class="summary-number">${summary.quantumSafe}</div>
+            <div class="summary-number">0</div>
             <div class="summary-label">Quantum Safe</div>
         </div>
         <div class="summary-card vulnerable">
-            <div class="summary-number">${summary.quantumVulnerable}</div>
+            <div class="summary-number">0</div>
             <div class="summary-label">Quantum Vulnerable</div>
         </div>
         <div class="summary-card warning">
-            <div class="summary-number">${summary.unknown}</div>
+            <div class="summary-number">0</div>
             <div class="summary-label">Unknown Status</div>
         </div>
         <div class="summary-card">
-            <div class="summary-number">${summary.totalAssets}</div>
+            <div class="summary-number">0</div>
             <div class="summary-label">Total Assets</div>
         </div>
     </div>
     
     <div class="compliance-section">
-        <div class="compliance-score ${compliance.status}">${compliance.score}%</div>
-        <div class="compliance-status">${compliance.status}</div>
-        <p>${compliance.details}</p>
+        <div class="compliance-score non-compliant">0%</div>
+        <div class="compliance-status">non-compliant</div>
+        <p>0 out of 0 cryptographic assets are quantum-safe</p>
     </div>
     
     <h2 class="section-title">📋 Cryptographic Assets</h2>
     
-    ${assets.length > 0 ? `
-    <table class="assets-table">
-        <thead>
-            <tr>
-                <th>Asset Name</th>
-                <th>Type</th>
-                <th>Primitive</th>
-                <th>Location</th>
-                <th>Quantum Safe</th>
-                <th>Severity</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${assetsTableRows}
-        </tbody>
-    </table>
-    ` : `
+    
     <p style="text-align: center; color: #666; padding: 40px;">No cryptographic assets detected in this scan.</p>
-    `}
+    
     
     <div class="footer">
-        <p>Generated by Q-Scan PQC Vulnerability Scanner • ${timestamp}</p>
+        <p>Generated by Q-Scan PQC Vulnerability Scanner • 8/24/2025</p>
         <p>This report identifies post-quantum cryptography vulnerabilities and compliance status.</p>
     </div>
 </body>
 </html>
-    `;
-  }
-
-  private generateSimplePDF(data: any): string {
-    const { repository, scanId, timestamp, summary, compliance, assets } = data;
     
-    // Generate a simple PDF-like text format that browsers can display
-    return `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
-/Resources <<
-/Font <<
-/F1 5 0 R
->>
->>
->>
-endobj
-
-4 0 obj
-<<
-/Length 800
->>
-stream
-BT
-/F1 16 Tf
-50 750 Td
-(Post-Quantum Cryptography Report) Tj
-0 -30 Td
-/F1 12 Tf
-(Repository: ${repository.name}) Tj
-0 -20 Td
-(Scan ID: ${scanId}) Tj
-0 -20 Td
-(Generated: ${timestamp}) Tj
-0 -40 Td
-(EXECUTIVE SUMMARY) Tj
-0 -20 Td
-(Total Assets: ${summary.totalAssets}) Tj
-0 -20 Td
-(Quantum Safe: ${summary.quantumSafe}) Tj
-0 -20 Td
-(Quantum Vulnerable: ${summary.quantumVulnerable}) Tj
-0 -20 Td
-(Unknown Status: ${summary.unknown}) Tj
-0 -40 Td
-(COMPLIANCE SCORE: ${compliance.score}%) Tj
-0 -20 Td
-(Status: ${compliance.status}) Tj
-0 -20 Td
-(${compliance.details}) Tj
-0 -40 Td
-(CRYPTOGRAPHIC ASSETS) Tj
-${assets.map((asset: any, index: number) => 
-  `0 -20 Td
-(${index + 1}. ${asset.name} - ${asset.primitive} [${asset.quantumSafe}]) Tj`
-).join('\n')}
-ET
-endstream
-endobj
-
-5 0 obj
-<<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
-endobj
-
-xref
-0 6
-0000000000 65535 f 
-0000000015 00000 n 
-0000000074 00000 n 
-0000000131 00000 n 
-0000000244 00000 n 
-0000001094 00000 n 
-trailer
-<<
-/Size 6
-/Root 1 0 R
->>
-startxref
-1162
-%%EOF`;
-  }
-}
-
-export const pdfGenerator = new PDFGeneratorService();
