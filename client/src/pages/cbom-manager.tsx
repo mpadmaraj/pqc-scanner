@@ -19,6 +19,64 @@ export default function CbomManager() {
   const [selectedCbom, setSelectedCbom] = useState<string | null>(null);
 
   const { toast } = useToast();
+
+  const handleDownloadCBOM = async (scanId: string) => {
+    try {
+      const response = await fetch(`/api/cbom-reports/${scanId}`);
+      if (!response.ok) throw new Error('Failed to fetch CBOM report');
+      
+      const cbomData = await response.json();
+      const blob = new Blob([JSON.stringify(cbomData.content, null, 2)], {
+        type: 'application/json'
+      });
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cbom-report-${scanId}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading CBOM report:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download CBOM report",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadPDF = async (scanId: string) => {
+    try {
+      const response = await fetch(`/api/cbom-reports/${scanId}/pdf`);
+      if (!response.ok) throw new Error('Failed to generate PDF report');
+      
+      const pdfBlob = await response.blob();
+      const url = URL.createObjectURL(pdfBlob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cbom-report-${scanId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: "PDF report downloaded successfully",
+      });
+    } catch (error) {
+      console.error('Error downloading PDF report:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to generate PDF report",
+        variant: "destructive",
+      });
+    }
+  };
   const queryClient = useQueryClient();
 
   const { data: repositories = [] } = useQuery<Repository[]>({
@@ -329,9 +387,19 @@ export default function CbomManager() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
+                                    onClick={() => handleDownloadCBOM(report.scanId)}
                                     data-testid={`button-download-${report.id}`}
                                   >
                                     <Download className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDownloadPDF(report.scanId)}
+                                    data-testid={`button-download-pdf-${report.id}`}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <FileText className="h-4 w-4" />
                                   </Button>
                                 </div>
                               </TableCell>

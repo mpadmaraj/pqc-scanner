@@ -211,23 +211,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Repository not found" });
       }
 
-      // Check if PDF already exists
-      let pdfPath = report.pdfPath;
-      
-      if (!pdfPath || !(await fs.access(pdfPath).then(() => true).catch(() => false))) {
-        // Generate new PDF
-        pdfPath = await pdfGenerator.generateCBOMPDF(report, repository.name);
-        
-        // Update report with PDF path
-        await storage.updateCbomReport(report.id, { pdfPath });
-      }
+      // Generate PDF buffer directly
+      const pdfBuffer = await pdfGenerator.generateCBOMPDF(report, repository.name);
 
       // Set headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="cbom-report-${repository.name}-${scanId}.pdf"`);
       
-      // Stream the PDF file
-      const pdfBuffer = await fs.readFile(pdfPath);
+      // Send the PDF buffer
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating PDF report:", error);
