@@ -26,6 +26,9 @@ export default function ScanRepository() {
   const [provider, setProvider] = useState<"github" | "gitlab" | "bitbucket" | "local">("github");
   const [description, setDescription] = useState("");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedBranches, setSelectedBranches] = useState<string[]>(["main"]);
+  const [availableBranches, setAvailableBranches] = useState<string[]>(["main"]);
+  const [isFetchingBranches, setIsFetchingBranches] = useState(false);
   const [isValidatingRepo, setIsValidatingRepo] = useState(false);
   const [repoValidationStatus, setRepoValidationStatus] = useState<string | null>(null);
   
@@ -43,6 +46,11 @@ export default function ScanRepository() {
   const [orgProvider, setOrgProvider] = useState<"github" | "gitlab" | "bitbucket">("github");
   const [organizationName, setOrganizationName] = useState("");
   const [isRescanModalOpen, setIsRescanModalOpen] = useState(false);
+  
+  // Branch scan modal state
+  const [isBranchScanModalOpen, setIsBranchScanModalOpen] = useState(false);
+  const [selectedScanRepository, setSelectedScanRepository] = useState<any>(null);
+  const [selectedScanBranch, setSelectedScanBranch] = useState<string>("main");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -123,6 +131,8 @@ export default function ScanRepository() {
       setRepoUrl("");
       setDescription("");
       setSelectedLanguages([]);
+      setSelectedBranches(["main"]);
+      setAvailableBranches(["main"]);
       setRepoValidationStatus(null);
     },
     onError: () => {
@@ -331,18 +341,48 @@ export default function ScanRepository() {
       provider,
       description,
       languages: selectedLanguages,
+      branches: selectedBranches,
     });
   };
 
   const handleStartScan = (repositoryId: string) => {
+    const repo = repositories?.find((r: any) => r.id === repositoryId);
+    if (!repo) return;
+    
+    // If repository has multiple branches, show branch selection modal
+    if (repo.branches && repo.branches.length > 1) {
+      setSelectedScanRepository(repo);
+      setSelectedScanBranch(repo.branches[0] || "main");
+      setIsBranchScanModalOpen(true);
+    } else {
+      // If only one branch, scan it directly
+      const branch = repo.branches?.[0] || "main";
+      startScanMutation.mutate({
+        repositoryId,
+        branch,
+        scanConfig: {
+          tools: ["semgrep"],
+          languages: [],
+          customRules: [],
+        }
+      });
+    }
+  };
+
+  const handleBranchScanConfirm = () => {
+    if (!selectedScanRepository) return;
+    
     startScanMutation.mutate({
-      repositoryId,
+      repositoryId: selectedScanRepository.id,
+      branch: selectedScanBranch,
       scanConfig: {
         tools: ["semgrep"],
         languages: [],
         customRules: [],
       }
     });
+    setIsBranchScanModalOpen(false);
+    setSelectedScanRepository(null);
   };
 
   const handleEditRepository = (repo: any) => {
@@ -715,6 +755,12 @@ export default function ScanRepository() {
                           <ArrowUpDown className="ml-2 h-4 w-4" />
                         </div>
                       </TableHead>
+                      <TableHead data-testid="header-branches">
+                        <div className="flex items-center">
+                          <GitBranch className="mr-2 h-4 w-4" />
+                          Branches
+                        </div>
+                      </TableHead>
                       <TableHead 
                         className="cursor-pointer hover:text-foreground"
                         onClick={() => handleSort('vulnerabilities')}
@@ -779,6 +825,33 @@ export default function ScanRepository() {
                               <div className="text-xs text-muted-foreground">
                                 {scanStatus.dateTime}
                               </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {repo.branches && repo.branches.length > 0 ? (
+                                <>
+                                  <div className="flex flex-wrap gap-1">
+                                    {repo.branches.slice(0, 2).map((branch: string) => (
+                                      <Badge key={branch} variant="outline" className="text-xs font-mono">
+                                        {branch}
+                                      </Badge>
+                                    ))}
+                                    {repo.branches.length > 2 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        +{repo.branches.length - 2}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {repo.branches.length} branch{repo.branches.length !== 1 ? 'es' : ''}
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="text-xs text-muted-foreground">
+                                  No branches
+                                </div>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -961,7 +1034,10 @@ export default function ScanRepository() {
                   onChange={(e) => {
                     setRepoUrl(e.target.value);
                     setRepoValidationStatus(null);
-                    setTimeout(() => validateAndFetchRepoMetadata(e.target.value), 1000);
+                    setTimeout(() => {
+                      validateAndFetchRepoMetadata(e.target.value);
+                      fetchRepositoryBranches(e.target.value);
+                    }, 1000);
                   }}
                   placeholder="https://github.com/username/repository"
                   data-testid="input-repo-url"
@@ -1051,6 +1127,53 @@ export default function ScanRepository() {
                 ))}
               </div>
             </div>
+
+            {/* Branches */}
+            {provider === 'github' && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-sm font-medium">Git Branches</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fetchRepositoryBranches(repoUrl)}
+                    disabled={!repoUrl || isFetchingBranches}
+                    className="h-8 w-8 p-0"
+                    title="Refresh branches"
+                    data-testid="button-refresh-branches"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isFetchingBranches ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {isFetchingBranches ? (
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      Fetching branches...
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                      {availableBranches.map((branch) => (
+                        <label key={branch} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedBranches.includes(branch)}
+                            onChange={() => handleBranchToggle(branch)}
+                            className="rounded border-gray-300"
+                            data-testid={`checkbox-branch-${branch}`}
+                          />
+                          <span className="text-sm font-mono">{branch}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Select branches to scan. Default: main
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -1233,6 +1356,62 @@ export default function ScanRepository() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Branch Selection Modal for Scanning */}
+      <Dialog open={isBranchScanModalOpen} onOpenChange={setIsBranchScanModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Branch to Scan</DialogTitle>
+            <DialogDescription>
+              Choose which branch to scan for {selectedScanRepository?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="scanBranch">Branch</Label>
+              <Select value={selectedScanBranch} onValueChange={setSelectedScanBranch}>
+                <SelectTrigger data-testid="select-scan-branch">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedScanRepository?.branches?.map((branch: string) => (
+                    <SelectItem key={branch} value={branch}>
+                      <div className="flex items-center space-x-2">
+                        <GitBranch className="h-4 w-4" />
+                        <span className="font-mono">{branch}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBranchScanModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleBranchScanConfirm}
+              disabled={startScanMutation.isPending}
+              data-testid="button-start-branch-scan"
+            >
+              {startScanMutation.isPending ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Start Scan
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

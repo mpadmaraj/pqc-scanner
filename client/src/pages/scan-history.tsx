@@ -111,12 +111,13 @@ export default function ScanHistory() {
   };
 
   const formatDuration = (startedAt?: string, completedAt?: string) => {
-    if (!startedAt) return "N/A";
+    if (!startedAt) return "Pending";
     
     const start = new Date(startedAt);
     const end = completedAt ? new Date(completedAt) : new Date();
     const diffMs = end.getTime() - start.getTime();
     
+    if (diffMs < 1000) return "<1s";
     if (diffMs < 60000) return `${Math.round(diffMs / 1000)}s`;
     if (diffMs < 3600000) return `${Math.round(diffMs / 60000)}m`;
     return `${Math.round(diffMs / 3600000)}h`;
@@ -270,6 +271,7 @@ export default function ScanHistory() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Repository</TableHead>
+                      <TableHead>Branch</TableHead>
                       <TableHead>Source</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Scan Date & Time</TableHead>
@@ -288,6 +290,11 @@ export default function ScanHistory() {
                             <div className="text-sm text-muted-foreground">
                               {scan.totalFiles > 0 && `${scan.totalFiles} files`}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs font-mono">
+                              {scan.branch || "main"}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <TooltipProvider>

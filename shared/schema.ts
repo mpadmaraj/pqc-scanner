@@ -26,6 +26,7 @@ export const repositories = pgTable("repositories", {
   provider: repositoryProviderEnum("provider").notNull(),
   description: text("description"),
   languages: jsonb("languages").$type<string[]>().default([]),
+  branches: jsonb("branches").$type<string[]>().default(["main"]),
   lastScanAt: timestamp("last_scan_at"),
   integrationId: varchar("integration_id").references(() => integrations.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -35,6 +36,7 @@ export const repositories = pgTable("repositories", {
 export const scans = pgTable("scans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   repositoryId: varchar("repository_id").references(() => repositories.id).notNull(),
+  branch: text("branch").default("main"),
   status: scanStatusEnum("status").default("pending").notNull(),
   progress: integer("progress").default(0),
   startedAt: timestamp("started_at"),

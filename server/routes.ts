@@ -8,6 +8,7 @@ import { integrationsService } from "./services/integrations";
 import { initializeDefaultIntegrations } from "./services/integrations";
 import { repositoryImportService } from "./services/repository-import";
 import { pdfGenerator } from "./services/pdf-generator";
+import { githubAPI } from "./services/github-api";
 import path from 'path';
 import { promises as fs } from 'fs';
 import { insertRepositorySchema, insertScanSchema, insertVulnerabilitySchema, insertIntegrationSchema } from "@shared/schema";
@@ -72,6 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         provider: req.body.provider,
         description: req.body.description,
         languages: Array.isArray(req.body.languages) ? req.body.languages : [],
+        branches: Array.isArray(req.body.branches) ? req.body.branches : ["main"],
       };
       const repository = await storage.updateRepository(req.params.id, updateData);
       res.json(repository);
@@ -92,6 +94,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Delete repository error:", error);
       res.status(500).json({ error: "Failed to delete repository", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // GitHub API routes for branch fetching
+  // Temporary endpoint for fetching branches before repository creation (must be before :id route)
+  app.get("/api/repositories/temp/branches", async (req, res) => {
+    try {
+      const repoUrl = req.query.url as string;
+      if (!repoUrl) {
+        return res.status(400).json({ error: "Repository URL is required" });
+      }
+
+      if (!repoUrl.includes('github.com')) {
+        return res.status(400).json({ error: "Branch fetching only supported for GitHub repositories" });
+      }
+
+      // Try to get GitHub token from provider tokens (future implementation)
+      // For now, try without token (public repos only)
+      const branches = await githubAPI.fetchRepositoryBranches(repoUrl);
+      res.json({ branches });
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch branches", 
+        details: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.get("/api/repositories/:id/branches", async (req, res) => {
+    try {
+      const repository = await storage.getRepository(req.params.id);
+      if (!repository) {
+        return res.status(404).json({ error: "Repository not found" });
+      }
+
+      if (repository.provider !== 'github') {
+        return res.status(400).json({ error: "Branch fetching only supported for GitHub repositories" });
+      }
+
+      // Try to get GitHub token from provider tokens (future implementation)
+      // For now, try without token (public repos only)
+      const branches = await githubAPI.fetchRepositoryBranches(repository.url);
+      res.json({ branches });
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch branches", 
+        details: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
 

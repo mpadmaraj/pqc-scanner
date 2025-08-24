@@ -122,7 +122,8 @@ export class DatabaseStorage implements IStorage {
   async createRepository(repository: InsertRepository): Promise<Repository> {
     const safeRepository: any = {
       ...repository,
-      languages: Array.isArray(repository.languages) ? repository.languages : []
+      languages: Array.isArray(repository.languages) ? repository.languages : [],
+      branches: Array.isArray(repository.branches) ? repository.branches : ["main"]
     };
     
     const [created] = await db

@@ -126,9 +126,11 @@ class AsyncScannerService {
         throw new Error("Repository not found");
       }
 
-      // Clone repository to temp directory
+      // Clone repository to temp directory  
       job.progress = 10;
-      const tempDir = await this.cloneRepository(repository.url, job.id);
+      const scan = await storage.getScan(job.id);
+      const branch = scan?.branch || "main";
+      const tempDir = await this.cloneRepository(repository.url, job.id, branch);
 
       // Run semgrep scan
       job.progress = 30;
@@ -170,22 +172,34 @@ class AsyncScannerService {
     }
   }
 
-  private async cloneRepository(url: string, jobId: string): Promise<string> {
+  private async cloneRepository(url: string, jobId: string, branch: string = "main"): Promise<string> {
     const tempDir = path.join("/tmp", `scan-${jobId}`);
     
     try {
       // Create temp directory
       await fs.mkdir(tempDir, { recursive: true });
 
-      // Clone repository (shallow clone for speed)
+      // Clone repository with specific branch (shallow clone for speed)
       const { stdout, stderr } = await execAsync(
-        `git clone --depth 1 "${url}" "${tempDir}"`,
+        `git clone --depth 1 --branch "${branch}" "${url}" "${tempDir}"`,
         { timeout: 30000 }
       );
 
+      console.log(`Successfully cloned repository ${url} branch ${branch} to ${tempDir}`);
       return tempDir;
     } catch (error) {
-      throw new Error(`Failed to clone repository: ${error}`);
+      // If branch doesn't exist, try cloning default branch
+      console.warn(`Failed to clone branch ${branch}, trying default branch:`, error);
+      try {
+        const { stdout, stderr } = await execAsync(
+          `git clone --depth 1 "${url}" "${tempDir}"`,
+          { timeout: 30000 }
+        );
+        console.log(`Successfully cloned repository ${url} default branch to ${tempDir}`);
+        return tempDir;
+      } catch (fallbackError) {
+        throw new Error(`Failed to clone repository: ${fallbackError}`);
+      }
     }
   }
 
