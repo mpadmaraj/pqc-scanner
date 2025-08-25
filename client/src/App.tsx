@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
 import ScanRepository from "@/pages/scan-repository";
+import ImportRepositories from "@/pages/import-repositories";
 import ScanHistory from "@/pages/scan-history";
 import Reports from "@/pages/reports";
 import Integrations from "@/pages/integrations";
@@ -20,6 +21,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/scan-repository" component={ScanRepository} />
+        <Route path="/import-repositories" component={ImportRepositories} />
         <Route path="/scan-history" component={ScanHistory} />
         <Route path="/reports" component={Reports} />
         <Route path="/integrations" component={Integrations} />

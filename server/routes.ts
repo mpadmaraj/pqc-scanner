@@ -606,23 +606,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/settings/provider-tokens", async (req, res) => {
     try {
-      const { provider, accessToken, organizationAccess } = req.body;
+      const { name, provider, accessToken, organizationAccess } = req.body;
       
-      if (!provider || !accessToken) {
-        return res.status(400).json({ error: "Provider and access token are required" });
+      if (!name || !provider || !accessToken) {
+        return res.status(400).json({ error: "Name, provider and access token are required" });
       }
 
       // For now, we'll use a hardcoded user ID since we don't have auth yet
       const userId = "demo-user";
 
-      // Check if a token for this provider already exists
-      const existingToken = await storage.getProviderTokenByProvider(userId, provider);
+      // Check if a token with this name already exists for this user
+      const existingToken = await storage.getProviderTokenByName(userId, name);
       if (existingToken) {
-        return res.status(400).json({ error: "Token for this provider already exists. Please update or delete the existing token first." });
+        return res.status(400).json({ error: "A provider with this name already exists. Please choose a different name." });
       }
 
       const tokenData = {
         userId,
+        name,
         provider,
         accessToken,
         organizationAccess: organizationAccess || [],
@@ -646,6 +647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Test the token by making a simple API call
       let testResult = false;
+      let errorMessage = "";
 
       switch (token.provider) {
         case "github":
@@ -653,11 +655,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const response = await fetch("https://api.github.com/user", {
               headers: {
                 "Authorization": `Bearer ${token.accessToken}`,
-                "Accept": "application/vnd.github.v3+json"
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "Q-Scan-App"
               }
             });
-            testResult = response.ok;
+            
+            if (response.ok) {
+              testResult = true;
+            } else {
+              const errorData = await response.json().catch(() => ({}));
+              errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+            }
           } catch (error) {
+            errorMessage = error instanceof Error ? error.message : "Network error";
             testResult = false;
           }
           break;
@@ -665,11 +675,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const response = await fetch("https://gitlab.com/api/v4/user", {
               headers: {
-                "Authorization": `Bearer ${token.accessToken}`
+                "Authorization": `Bearer ${token.accessToken}`,
+                "Accept": "application/json"
               }
             });
-            testResult = response.ok;
+            
+            if (response.ok) {
+              testResult = true;
+            } else {
+              const errorData = await response.json().catch(() => ({}));
+              errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+            }
           } catch (error) {
+            errorMessage = error instanceof Error ? error.message : "Network error";
             testResult = false;
           }
           break;
@@ -677,24 +695,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const response = await fetch("https://api.bitbucket.org/2.0/user", {
               headers: {
-                "Authorization": `Bearer ${token.accessToken}`
+                "Authorization": `Bearer ${token.accessToken}`,
+                "Accept": "application/json"
               }
             });
-            testResult = response.ok;
+            
+            if (response.ok) {
+              testResult = true;
+            } else {
+              const errorData = await response.json().catch(() => ({}));
+              errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+            }
           } catch (error) {
+            errorMessage = error instanceof Error ? error.message : "Network error";
             testResult = false;
           }
           break;
         default:
-          return res.status(400).json({ error: "Unsupported provider" });
+          return res.status(400).json({ error: "Unsupported provider for testing" });
       }
 
       if (testResult) {
-        res.json({ success: true });
+        // Update token as active
+        await storage.updateProviderToken(token.id, { isActive: true });
+        res.json({ success: true, message: "Token is valid and active" });
       } else {
-        res.status(401).json({ error: "Token validation failed" });
+        // Mark token as inactive
+        await storage.updateProviderToken(token.id, { isActive: false });
+        res.status(401).json({ success: false, message: errorMessage || "Token is invalid or expired" });
       }
     } catch (error) {
+      console.error("Token test error:", error);
       res.status(500).json({ error: "Failed to test provider token" });
     }
   });
@@ -714,6 +745,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Organization repository import routes
+  app.post("/api/repositories/fetch-organization", async (req, res) => {
+    try {
+      const { providerTokenId, organization } = req.body;
+      
+      if (!providerTokenId || !organization) {
+        return res.status(400).json({ error: "Provider token ID and organization are required" });
+      }
+
+      const token = await storage.getProviderToken(providerTokenId);
+      if (!token) {
+        return res.status(404).json({ error: "Provider token not found" });
+      }
+
+      let repositories = [];
+
+      // Fetch repositories from the actual provider
+      try {
+        switch (token.provider) {
+          case "github":
+            const githubResponse = await fetch(`https://api.github.com/orgs/${organization}/repos?per_page=100`, {
+              headers: {
+                "Authorization": `Bearer ${token.accessToken}`,
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "Q-Scan-App"
+              }
+            });
+
+            if (!githubResponse.ok) {
+              const errorData = await githubResponse.json().catch(() => ({}));
+              throw new Error(errorData.message || `GitHub API error: ${githubResponse.status}`);
+            }
+
+            repositories = await githubResponse.json();
+            break;
+
+          case "gitlab":
+            const gitlabResponse = await fetch(`https://gitlab.com/api/v4/groups/${organization}/projects?per_page=100`, {
+              headers: {
+                "Authorization": `Bearer ${token.accessToken}`,
+                "Accept": "application/json"
+              }
+            });
+
+            if (!gitlabResponse.ok) {
+              const errorData = await gitlabResponse.json().catch(() => ({}));
+              throw new Error(errorData.message || `GitLab API error: ${gitlabResponse.status}`);
+            }
+
+            repositories = await gitlabResponse.json();
+            break;
+
+          case "bitbucket":
+            const bitbucketResponse = await fetch(`https://api.bitbucket.org/2.0/repositories/${organization}?pagelen=100`, {
+              headers: {
+                "Authorization": `Bearer ${token.accessToken}`,
+                "Accept": "application/json"
+              }
+            });
+
+            if (!bitbucketResponse.ok) {
+              const errorData = await bitbucketResponse.json().catch(() => ({}));
+              throw new Error(errorData.error?.message || `Bitbucket API error: ${bitbucketResponse.status}`);
+            }
+
+            const bitbucketData = await bitbucketResponse.json();
+            repositories = bitbucketData.values || [];
+            break;
+
+          default:
+            throw new Error(`Unsupported provider: ${token.provider}`);
+        }
+
+        res.json({ 
+          success: true, 
+          repositories: repositories,
+          count: repositories.length
+        });
+      } catch (apiError) {
+        console.error("API Error:", apiError);
+        res.status(500).json({ 
+          error: "Failed to fetch repositories from provider",
+          details: apiError instanceof Error ? apiError.message : "Unknown error"
+        });
+      }
+    } catch (error) {
+      console.error("Fetch organization error:", error);
+      res.status(500).json({ error: "Failed to fetch organization repositories" });
+    }
+  });
+
+  app.post("/api/repositories/import-bulk", async (req, res) => {
+    try {
+      const { repositories: reposToImport } = req.body;
+      
+      if (!Array.isArray(reposToImport) || reposToImport.length === 0) {
+        return res.status(400).json({ error: "Repositories array is required" });
+      }
+
+      const importedRepos = [];
+      
+      for (const repoData of reposToImport) {
+        try {
+          const repository = await storage.createRepository({
+            name: repoData.name,
+            url: repoData.url,
+            provider: repoData.provider,
+            description: repoData.description || "",
+            languages: repoData.languages || [],
+            branches: repoData.branches || ["main"],
+          });
+          importedRepos.push(repository);
+        } catch (error) {
+          console.error(`Failed to import repository ${repoData.name}:`, error);
+          // Continue with other repositories even if one fails
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        count: importedRepos.length,
+        repositories: importedRepos
+      });
+    } catch (error) {
+      console.error("Bulk import error:", error);
+      res.status(500).json({ error: "Failed to import repositories" });
+    }
+  });
+
   app.post("/api/repositories/scan-organization", async (req, res) => {
     try {
       const { provider, organization } = req.body;

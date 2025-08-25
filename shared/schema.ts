@@ -273,6 +273,7 @@ export type InsertIntegration = z.infer<typeof insertIntegrationSchema>;
 export const providerTokens = pgTable("provider_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name").notNull(), // User-friendly name to distinguish multiple providers
   provider: varchar("provider").notNull(), // github, gitlab, bitbucket
   tokenType: varchar("token_type").notNull().default("personal_access_token"), // personal_access_token, oauth
   accessToken: varchar("access_token").notNull(),

@@ -43,7 +43,7 @@ export default function ScanRepository() {
   
   // Organization Import State
   const [isOrgImportModalOpen, setIsOrgImportModalOpen] = useState(false);
-  const [orgProvider, setOrgProvider] = useState<"github" | "gitlab" | "bitbucket">("github");
+  const [selectedProviderToken, setSelectedProviderToken] = useState<string>("");
   const [organizationName, setOrganizationName] = useState("");
   const [isRescanModalOpen, setIsRescanModalOpen] = useState(false);
   
@@ -64,22 +64,23 @@ export default function ScanRepository() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: repositories } = useQuery({
+  const { data: repositories = [] } = useQuery({
     queryKey: ["/api/repositories"],
   });
 
-  const { data: scans } = useQuery({
+  const { data: providerTokens = [] } = useQuery<ProviderToken[]>({
+    queryKey: ["/api/settings/provider-tokens"],
+  });
+
+  const { data: scans = [] } = useQuery({
     queryKey: ["/api/scans"],
     refetchInterval: 5000, // Poll every 5 seconds for scan status
   });
 
-  const { data: vulnerabilities } = useQuery({
+  const { data: vulnerabilities = [] } = useQuery({
     queryKey: ["/api/vulnerabilities"],
   });
 
-  const { data: providerTokens = [] } = useQuery({
-    queryKey: ["/api/settings/provider-tokens"],
-  });
 
   const availableLanguages = [
     "java", "javascript", "python", "typescript", "go", "rust", "cpp", "csharp"
@@ -774,14 +775,15 @@ export default function ScanRepository() {
                 Settings
               </Button>
             </Link>
-            <Button 
-              onClick={() => setIsOrgImportModalOpen(true)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Building2 className="h-4 w-4" />
-              Import Organization
-            </Button>
+            <Link to="/import-repositories">
+              <Button 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Building2 className="h-4 w-4" />
+                Import Organization
+              </Button>
+            </Link>
             <Button 
               onClick={() => setIsRescanModalOpen(true)}
               variant="outline"
@@ -1389,19 +1391,20 @@ export default function ScanRepository() {
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="orgProvider">Git Provider</Label>
-                <Select value={orgProvider} onValueChange={(value: any) => setOrgProvider(value)}>
+                <Label htmlFor="providerToken">Provider Token</Label>
+                <Select value={selectedProviderToken} onValueChange={setSelectedProviderToken}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select provider" />
                   </SelectTrigger>
                   <SelectContent>
                     {providerTokens.map((token: ProviderToken) => (
-                      <SelectItem key={token.provider} value={token.provider}>
+                      <SelectItem key={token.id} value={token.id}>
                         <div className="flex items-center gap-2">
                           {token.provider === "github" && <Github className="h-4 w-4" />}
                           {token.provider === "gitlab" && <Gitlab className="h-4 w-4" />}
                           {token.provider === "bitbucket" && <SiBitbucket className="h-4 w-4" />}
-                          {token.provider.charAt(0).toUpperCase() + token.provider.slice(1)}
+                          <span className="capitalize">{token.provider}</span>
+                          <span className="text-muted-foreground">- {token.name}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -1425,15 +1428,19 @@ export default function ScanRepository() {
                 </Button>
                 <Button 
                   onClick={() => {
-                    if (organizationName.trim()) {
-                      scanOrganizationMutation.mutate({
-                        provider: orgProvider,
-                        organization: organizationName.trim()
-                      });
-                      setOrganizationName("");
+                    if (organizationName.trim() && selectedProviderToken) {
+                      const selectedToken = providerTokens.find(t => t.id === selectedProviderToken);
+                      if (selectedToken) {
+                        scanOrganizationMutation.mutate({
+                          provider: selectedToken.provider,
+                          organization: organizationName.trim()
+                        });
+                        setOrganizationName("");
+                        setSelectedProviderToken("");
+                      }
                     }
                   }}
-                  disabled={!organizationName.trim() || scanOrganizationMutation.isPending}
+                  disabled={!organizationName.trim() || !selectedProviderToken || scanOrganizationMutation.isPending}
                 >
                   {scanOrganizationMutation.isPending ? (
                     <>

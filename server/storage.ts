@@ -67,6 +67,7 @@ export interface IStorage {
   getProviderTokens(userId: string): Promise<ProviderToken[]>;
   getProviderToken(id: string): Promise<ProviderToken | undefined>;
   getProviderTokenByProvider(userId: string, provider: string): Promise<ProviderToken | undefined>;
+  getProviderTokenByName(userId: string, name: string): Promise<ProviderToken | undefined>;
   createProviderToken(token: InsertProviderToken): Promise<ProviderToken>;
   updateProviderToken(id: string, updates: Partial<ProviderToken>): Promise<ProviderToken>;
   deleteProviderToken(id: string): Promise<void>;
@@ -678,6 +679,17 @@ export class DatabaseStorage implements IStorage {
         eq(providerTokens.userId, userId),
         eq(providerTokens.provider, provider),
         eq(providerTokens.isActive, true)
+      ));
+    return token || undefined;
+  }
+
+  async getProviderTokenByName(userId: string, name: string): Promise<ProviderToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(providerTokens)
+      .where(and(
+        eq(providerTokens.userId, userId),
+        eq(providerTokens.name, name)
       ));
     return token || undefined;
   }

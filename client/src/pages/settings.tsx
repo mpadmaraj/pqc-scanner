@@ -18,6 +18,7 @@ import { SiBitbucket } from "react-icons/si";
 
 export default function Settings() {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
+  const [tokenName, setTokenName] = useState("");
   const [selectedProvider, setSelectedProvider] = useState<string>("");
   const [tokenValue, setTokenValue] = useState("");
   const [orgAccess, setOrgAccess] = useState("");
@@ -32,12 +33,13 @@ export default function Settings() {
   });
 
   const addTokenMutation = useMutation({
-    mutationFn: async (data: { provider: string; accessToken: string; organizationAccess?: string[] }) => {
+    mutationFn: async (data: { name: string; provider: string; accessToken: string; organizationAccess?: string[] }) => {
       return await apiRequest("POST", "/api/settings/provider-tokens", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/settings/provider-tokens"] });
       setShowTokenDialog(false);
+      setTokenName("");
       setTokenValue("");
       setOrgAccess("");
       setSelectedProvider("");
@@ -46,10 +48,10 @@ export default function Settings() {
         description: "Your authentication token has been saved successfully.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to add provider token. Please check your token and try again.",
+        description: error.message || "Failed to add provider token. Please check your details and try again.",
         variant: "destructive",
       });
     }
@@ -98,10 +100,10 @@ export default function Settings() {
   });
 
   const handleAddToken = () => {
-    if (!selectedProvider || !tokenValue.trim()) {
+    if (!tokenName.trim() || !selectedProvider || !tokenValue.trim()) {
       toast({
         title: "Missing information",
-        description: "Please select a provider and enter a valid token.",
+        description: "Please enter a name, select a provider and enter a valid token.",
         variant: "destructive",
       });
       return;
@@ -112,6 +114,7 @@ export default function Settings() {
       : undefined;
 
     addTokenMutation.mutate({
+      name: tokenName.trim(),
       provider: selectedProvider,
       accessToken: tokenValue.trim(),
       organizationAccess
@@ -240,6 +243,20 @@ export default function Settings() {
                 
                 <div className="space-y-6">
                   <div className="space-y-2">
+                    <Label>Provider Name</Label>
+                    <Input
+                      data-testid="input-provider-name"
+                      type="text"
+                      value={tokenName}
+                      onChange={(e) => setTokenName(e.target.value)}
+                      placeholder="Enter a name for this provider (e.g., Personal GitHub, Work GitHub)"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Choose a descriptive name to distinguish multiple providers of the same type
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label>Provider</Label>
                     <Select value={selectedProvider} onValueChange={setSelectedProvider} data-testid="select-provider">
                       <SelectTrigger>
@@ -333,7 +350,7 @@ export default function Settings() {
                     </Button>
                     <Button 
                       onClick={handleAddToken}
-                      disabled={!selectedProvider || !tokenValue.trim() || addTokenMutation.isPending}
+                      disabled={!tokenName.trim() || !selectedProvider || !tokenValue.trim() || addTokenMutation.isPending}
                       data-testid="button-save-token"
                     >
                       {addTokenMutation.isPending ? (
@@ -377,10 +394,10 @@ export default function Settings() {
                         </div>
                         <div>
                           <CardTitle className="text-lg" data-testid={`text-provider-name-${token.id}`}>
-                            {getProviderName(token.provider)}
+                            {token.name}
                           </CardTitle>
                           <CardDescription className="text-sm">
-                            Added {token.createdAt ? new Date(token.createdAt).toLocaleDateString() : 'N/A'}
+                            {getProviderName(token.provider)} • Added {token.createdAt ? new Date(token.createdAt).toLocaleDateString() : 'N/A'}
                           </CardDescription>
                         </div>
                       </div>
