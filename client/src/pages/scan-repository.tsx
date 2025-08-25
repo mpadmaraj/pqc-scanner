@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Github, GitBranch, Search, Play, Plus, ExternalLink, AlertCircle, CheckCircle, Clock, Filter, ArrowUpDown, Edit, Trash2, Building2, RefreshCw, Settings } from "lucide-react";
+import { Github, GitBranch, Search, Play, Plus, ExternalLink, AlertCircle, CheckCircle, Clock, Filter, ArrowUpDown, Edit, Trash2, Building2, RefreshCw, Settings, Loader2 } from "lucide-react";
 import { SiBitbucket } from "react-icons/si";
 import { GitlabIcon as Gitlab } from "lucide-react";
 import type { ProviderToken } from "@shared/schema";
@@ -51,6 +51,15 @@ export default function ScanRepository() {
   const [isBranchScanModalOpen, setIsBranchScanModalOpen] = useState(false);
   const [selectedScanRepository, setSelectedScanRepository] = useState<any>(null);
   const [selectedScanBranch, setSelectedScanBranch] = useState<string>("main");
+  
+  // Edit Repository modal state
+  const [isEditRepoModalOpen, setIsEditRepoModalOpen] = useState(false);
+  const [editingRepository, setEditingRepository] = useState<any>(null);
+  const [editRepoName, setEditRepoName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editSelectedLanguages, setEditSelectedLanguages] = useState<string[]>([]);
+  const [editSelectedBranches, setEditSelectedBranches] = useState<string[]>([]);
+  const [editAvailableBranches, setEditAvailableBranches] = useState<string[]>([]);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -212,6 +221,48 @@ export default function ScanRepository() {
     },
   });
 
+  const updateRepositoryMutation = useMutation({
+    mutationFn: async (data: { id: string; updates: any }) => {
+      return await apiRequest("PUT", `/api/repositories/${data.id}`, data.updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+      setIsEditRepoModalOpen(false);
+      toast({
+        title: "Repository updated",
+        description: "Repository has been successfully updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update repository. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleUpdateRepository = () => {
+    if (!editingRepository || !editRepoName) {
+      toast({
+        title: "Validation Error",
+        description: "Repository name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateRepositoryMutation.mutate({
+      id: editingRepository.id,
+      updates: {
+        name: editRepoName,
+        description: editDescription,
+        languages: editSelectedLanguages,
+        branches: editSelectedBranches,
+      }
+    });
+  };
+
   // Computed data for table
   const enrichedRepositories = useMemo(() => {
     if (!Array.isArray(repositories)) return [];
@@ -310,6 +361,30 @@ export default function ScanRepository() {
         : [...prev, language]
     );
   };
+  
+  const handleEditLanguageToggle = (language: string) => {
+    setEditSelectedLanguages(prev =>
+      prev.includes(language)
+        ? prev.filter(l => l !== language)
+        : [...prev, language]
+    );
+  };
+  
+  const handleBranchToggle = (branch: string) => {
+    setSelectedBranches(prev =>
+      prev.includes(branch)
+        ? prev.filter(b => b !== branch)
+        : [...prev, branch]
+    );
+  };
+  
+  const handleEditBranchToggle = (branch: string) => {
+    setEditSelectedBranches(prev =>
+      prev.includes(branch)
+        ? prev.filter(b => b !== branch)
+        : [...prev, branch]
+    );
+  };
 
   const handleAddRepository = () => {
     if (!repoUrl || !repoName) {
@@ -386,10 +461,13 @@ export default function ScanRepository() {
   };
 
   const handleEditRepository = (repo: any) => {
-    toast({
-      title: "Edit Repository",
-      description: "Edit functionality would open a modal to modify repository settings.",
-    });
+    setEditingRepository(repo);
+    setEditRepoName(repo.name || "");
+    setEditDescription(repo.description || "");
+    setEditSelectedLanguages(repo.languages || []);
+    setEditSelectedBranches(repo.branches || ["main"]);
+    setEditAvailableBranches(repo.branches || ["main"]);
+    setIsEditRepoModalOpen(true);
   };
 
   const handleDeleteRepository = async (repositoryId: string) => {
@@ -433,7 +511,7 @@ export default function ScanRepository() {
     }
   };
 
-  const fetchRepositoryBranches = async (url: string) => {
+  const fetchRepositoryBranches = async (url: string, repositoryId?: string) => {
     if (!url || !url.includes('github.com')) {
       setAvailableBranches([]);
       return;
@@ -445,7 +523,21 @@ export default function ScanRepository() {
       const response = await fetch(`/api/repositories/temp/branches?url=${encodeURIComponent(url)}`);
       if (response.ok) {
         const data = await response.json();
-        setAvailableBranches(data.branches || []);
+        const branches = data.branches || [];
+        setAvailableBranches(branches);
+        
+        // If we have a repository ID, update the repository with the fetched branches
+        if (repositoryId && branches.length > 0) {
+          try {
+            await apiRequest('PUT', `/api/repositories/${repositoryId}`, {
+              branches: branches
+            });
+            // Invalidate repository cache to refresh the UI
+            queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+          } catch (updateError) {
+            console.error('Failed to update repository branches:', updateError);
+          }
+        }
       } else {
         console.error('Failed to fetch branches:', response.statusText);
         setAvailableBranches([]);
@@ -1040,7 +1132,7 @@ export default function ScanRepository() {
 
       {/* Add Repository Modal */}
       <Dialog open={isAddRepoModalOpen} onOpenChange={setIsAddRepoModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Repository</DialogTitle>
             <DialogDescription>
@@ -1435,6 +1527,121 @@ export default function ScanRepository() {
                   Start Scan
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Repository Modal */}
+      <Dialog open={isEditRepoModalOpen} onOpenChange={setIsEditRepoModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Repository</DialogTitle>
+            <DialogDescription>
+              Update repository settings and configuration.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Repository Name */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-repo-name">Repository Name</Label>
+              <Input
+                id="edit-repo-name"
+                value={editRepoName}
+                onChange={(e) => setEditRepoName(e.target.value)}
+                placeholder="Repository name"
+                data-testid="input-edit-repo-name"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description (Optional)</Label>
+              <Textarea
+                id="edit-description"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Brief description of the repository"
+                data-testid="textarea-edit-description"
+              />
+            </div>
+
+            {/* Languages */}
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Programming Languages</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {availableLanguages.map((language) => (
+                  <label key={language} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editSelectedLanguages.includes(language)}
+                      onChange={() => handleEditLanguageToggle(language)}
+                      className="rounded border-gray-300"
+                      data-testid={`checkbox-edit-language-${language}`}
+                    />
+                    <span className="text-sm capitalize">{language}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Branches */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-medium">Git Branches</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fetchRepositoryBranches(editingRepository?.url, editingRepository?.id)}
+                  disabled={!editingRepository?.url || isFetchingBranches}
+                  className="h-8 w-8 p-0"
+                  title="Refresh branches"
+                  data-testid="button-edit-refresh-branches"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isFetchingBranches ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {isFetchingBranches ? (
+                  <div className="text-sm text-muted-foreground flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    Fetching branches...
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                    {editAvailableBranches.map((branch) => (
+                      <label key={branch} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editSelectedBranches.includes(branch)}
+                          onChange={() => handleEditBranchToggle(branch)}
+                          className="rounded border-gray-300"
+                          data-testid={`checkbox-edit-branch-${branch}`}
+                        />
+                        <span className="text-sm font-mono">{branch}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Select branches to track for this repository.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditRepoModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateRepository}
+              disabled={updateRepositoryMutation.isPending || !editRepoName}
+              data-testid="button-update-repository"
+            >
+              {updateRepositoryMutation.isPending ? "Updating..." : "Update Repository"}
             </Button>
           </DialogFooter>
         </DialogContent>
