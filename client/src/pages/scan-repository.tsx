@@ -433,6 +433,31 @@ export default function ScanRepository() {
     }
   };
 
+  const fetchRepositoryBranches = async (url: string) => {
+    if (!url || !url.includes('github.com')) {
+      setAvailableBranches([]);
+      return;
+    }
+
+    setIsFetchingBranches(true);
+
+    try {
+      const response = await fetch(`/api/repositories/temp/branches?url=${encodeURIComponent(url)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableBranches(data.branches || []);
+      } else {
+        console.error('Failed to fetch branches:', response.statusText);
+        setAvailableBranches([]);
+      }
+    } catch (error) {
+      console.error('Error fetching branches:', error);
+      setAvailableBranches([]);
+    } finally {
+      setIsFetchingBranches(false);
+    }
+  };
+
   const validateAndFetchRepoMetadata = async (url: string) => {
     if (!url || !url.includes('github.com') && !url.includes('gitlab.com') && !url.includes('bitbucket.org')) {
       setRepoValidationStatus(null);
