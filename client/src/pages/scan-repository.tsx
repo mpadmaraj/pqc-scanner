@@ -894,6 +894,9 @@ export default function ScanRepository() {
                           <ArrowUpDown className="ml-2 h-4 w-4" />
                         </div>
                       </TableHead>
+                      <TableHead data-testid="header-languages">
+                        Languages
+                      </TableHead>
                       <TableHead 
                         className="cursor-pointer hover:text-foreground"
                         onClick={() => handleSort('lastScanAt')}
@@ -949,7 +952,11 @@ export default function ScanRepository() {
                               {repo.description && (
                                 <p className="text-xs text-muted-foreground">{repo.description}</p>
                               )}
-                              {repo.languages && repo.languages.length > 0 && (
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {repo.languages && repo.languages.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
                                   {repo.languages.slice(0, 3).map((lang: string) => (
                                     <Badge key={lang} variant="secondary" className="text-xs">
@@ -961,6 +968,10 @@ export default function ScanRepository() {
                                       +{repo.languages.length - 3}
                                     </Badge>
                                   )}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-muted-foreground">
+                                  No languages
                                 </div>
                               )}
                             </div>
