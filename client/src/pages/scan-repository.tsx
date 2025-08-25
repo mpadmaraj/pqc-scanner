@@ -460,7 +460,7 @@ export default function ScanRepository() {
     setSelectedScanRepository(null);
   };
 
-  const handleEditRepository = (repo: any) => {
+  const handleEditRepository = async (repo: any) => {
     setEditingRepository(repo);
     setEditRepoName(repo.name || "");
     setEditDescription(repo.description || "");
@@ -468,6 +468,11 @@ export default function ScanRepository() {
     setEditSelectedBranches(repo.branches || ["main"]);
     setEditAvailableBranches(repo.branches || ["main"]);
     setIsEditRepoModalOpen(true);
+    
+    // Fetch all available branches from GitHub when opening edit modal
+    if (repo.url && repo.url.includes('github.com')) {
+      await fetchRepositoryBranches(repo.url, repo.id);
+    }
   };
 
   const handleDeleteRepository = async (repositoryId: string) => {
@@ -514,6 +519,7 @@ export default function ScanRepository() {
   const fetchRepositoryBranches = async (url: string, repositoryId?: string) => {
     if (!url || !url.includes('github.com')) {
       setAvailableBranches([]);
+      setEditAvailableBranches([]);
       return;
     }
 
@@ -524,7 +530,10 @@ export default function ScanRepository() {
       if (response.ok) {
         const data = await response.json();
         const branches = data.branches || [];
+        
+        // Update both add modal and edit modal available branches
         setAvailableBranches(branches);
+        setEditAvailableBranches(branches);
         
         // If we have a repository ID, update the repository with the fetched branches
         if (repositoryId && branches.length > 0) {
@@ -534,17 +543,39 @@ export default function ScanRepository() {
             });
             // Invalidate repository cache to refresh the UI
             queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+            
+            toast({
+              title: "Branches updated",
+              description: `Found ${branches.length} branches and saved to database.`,
+            });
           } catch (updateError) {
             console.error('Failed to update repository branches:', updateError);
+            toast({
+              title: "Warning",
+              description: "Fetched branches but failed to save to database.",
+              variant: "destructive",
+            });
           }
         }
       } else {
         console.error('Failed to fetch branches:', response.statusText);
         setAvailableBranches([]);
+        setEditAvailableBranches([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch branches from GitHub.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
       setAvailableBranches([]);
+      setEditAvailableBranches([]);
+      toast({
+        title: "Error",
+        description: "Failed to fetch branches. Please check your internet connection.",
+        variant: "destructive",
+      });
     } finally {
       setIsFetchingBranches(false);
     }

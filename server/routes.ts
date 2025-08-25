@@ -75,9 +75,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         languages: Array.isArray(req.body.languages) ? req.body.languages : [],
         branches: Array.isArray(req.body.branches) ? req.body.branches : ["main"],
       };
+      
+      // If updating branches without other fields, this is likely a branch refresh from GitHub
+      if (req.body.branches && Object.keys(req.body).length === 1) {
+        console.log(`Updating repository ${req.params.id} with ${req.body.branches.length} branches from GitHub:`, req.body.branches);
+      }
+      
       const repository = await storage.updateRepository(req.params.id, updateData);
       res.json(repository);
     } catch (error) {
+      console.error("Update repository error:", error);
+      res.status(400).json({ error: "Invalid repository data" });
+    }
+  });
+
+  app.put("/api/repositories/:id", async (req, res) => {
+    try {
+      const updateData = {
+        name: req.body.name,
+        url: req.body.url,
+        provider: req.body.provider,
+        description: req.body.description,
+        languages: Array.isArray(req.body.languages) ? req.body.languages : [],
+        branches: Array.isArray(req.body.branches) ? req.body.branches : ["main"],
+      };
+      
+      // If updating branches without other fields, this is likely a branch refresh from GitHub
+      if (req.body.branches && Object.keys(req.body).length === 1) {
+        console.log(`Updating repository ${req.params.id} with ${req.body.branches.length} branches from GitHub:`, req.body.branches);
+      }
+      
+      const repository = await storage.updateRepository(req.params.id, updateData);
+      res.json(repository);
+    } catch (error) {
+      console.error("Update repository error:", error);
       res.status(400).json({ error: "Invalid repository data" });
     }
   });
