@@ -764,32 +764,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         switch (token.provider) {
           case "github":
-            // Try organization first, then user if organization fails
-            let githubResponse = await fetch(`https://api.github.com/orgs/${organization}/repos?per_page=100`, {
-              headers: {
-                "Authorization": `Bearer ${token.accessToken}`,
-                "Accept": "application/vnd.github.v3+json",
-                "User-Agent": "Q-Scan-App"
-              }
-            });
-
-            // If organization doesn't exist (404), try as a user
-            if (githubResponse.status === 404) {
-              githubResponse = await fetch(`https://api.github.com/users/${organization}/repos?per_page=100`, {
+            let githubResponse;
+            let attemptType = "organization";
+            
+            try {
+              // Try organization first
+              console.log(`Trying GitHub organization: ${organization}`);
+              githubResponse = await fetch(`https://api.github.com/orgs/${organization}/repos?per_page=100`, {
                 headers: {
                   "Authorization": `Bearer ${token.accessToken}`,
                   "Accept": "application/vnd.github.v3+json",
                   "User-Agent": "Q-Scan-App"
                 }
               });
-            }
 
-            if (!githubResponse.ok) {
-              const errorData = await githubResponse.json().catch(() => ({}));
-              throw new Error(errorData.message || `GitHub API error: ${githubResponse.status} - ${githubResponse.statusText}`);
-            }
+              console.log(`GitHub org response status: ${githubResponse.status}`);
 
-            repositories = await githubResponse.json();
+              // If organization doesn't exist (404), try as a user
+              if (githubResponse.status === 404) {
+                console.log(`Organization not found, trying as user: ${organization}`);
+                attemptType = "user";
+                githubResponse = await fetch(`https://api.github.com/users/${organization}/repos?per_page=100`, {
+                  headers: {
+                    "Authorization": `Bearer ${token.accessToken}`,
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "Q-Scan-App"
+                  }
+                });
+                console.log(`GitHub user response status: ${githubResponse.status}`);
+              }
+
+              if (!githubResponse.ok) {
+                const errorData = await githubResponse.json().catch(() => ({}));
+                const errorDetails = {
+                  status: githubResponse.status,
+                  statusText: githubResponse.statusText,
+                  attemptType,
+                  organization,
+                  message: errorData.message,
+                  documentation_url: errorData.documentation_url
+                };
+                
+                let userFriendlyMessage = "";
+                if (githubResponse.status === 404) {
+                  userFriendlyMessage = `GitHub ${attemptType} '${organization}' not found. Please check the ${attemptType} name and ensure it exists.`;
+                } else if (githubResponse.status === 401) {
+                  userFriendlyMessage = `GitHub token is invalid or expired. Please check your token permissions.`;
+                } else if (githubResponse.status === 403) {
+                  userFriendlyMessage = `GitHub token doesn't have permission to access '${organization}' repositories. Make sure the token has 'repo' scope.`;
+                } else {
+                  userFriendlyMessage = `GitHub API error (${githubResponse.status}): ${errorData.message || githubResponse.statusText}`;
+                }
+
+                throw new Error(`${userFriendlyMessage} | Details: ${JSON.stringify(errorDetails)}`);
+              }
+
+              repositories = await githubResponse.json();
+              console.log(`Successfully fetched ${repositories.length} repositories from GitHub ${attemptType}: ${organization}`);
+            } catch (fetchError) {
+              console.error("GitHub fetch error:", fetchError);
+              throw fetchError;
+            }
             break;
 
           case "gitlab":
