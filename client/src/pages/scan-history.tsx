@@ -12,9 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, User, Zap, FileText, Plus, Github, GitBranch, X, Check, ChevronsUpDown } from "lucide-react";
@@ -32,21 +30,9 @@ export default function ScanHistory() {
   const [isNewScanDialogOpen, setIsNewScanDialogOpen] = useState(false);
   const [selectedRepoForScan, setSelectedRepoForScan] = useState<any>(null);
   const [selectedBranch, setSelectedBranch] = useState<string>("");
-  const [selectedTools, setSelectedTools] = useState<string[]>(["semgrep", "bandit"]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [customRules, setCustomRules] = useState("");
   const [openRepoCombobox, setOpenRepoCombobox] = useState(false);
 
   const queryClient = useQueryClient();
-  
-  const availableTools = [
-    { id: "semgrep", name: "Semgrep", description: "Static analysis for security vulnerabilities" },
-    { id: "bandit", name: "Bandit", description: "Python security linter" },
-    { id: "pqc-analyzer", name: "PQC Analyzer", description: "Post-quantum cryptography vulnerability detection" },
-    { id: "crypto-scanner", name: "Crypto Scanner", description: "Cryptographic implementation analyzer" }
-  ];
-
-  const availableLanguages = ["java", "javascript", "python", "typescript", "go", "rust", "cpp", "csharp"];
 
   const { data: scans = [], isLoading } = useQuery<Scan[]>({
     queryKey: ["/api/scans"],
@@ -99,9 +85,6 @@ export default function ScanHistory() {
       setIsNewScanDialogOpen(false);
       setSelectedRepoForScan(null);
       setSelectedBranch("");
-      setSelectedTools(["semgrep", "bandit"]);
-      setSelectedLanguages([]);
-      setCustomRules("");
     },
     onError: (error: any) => {
       toast({
@@ -183,22 +166,6 @@ export default function ScanHistory() {
     queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
   };
   
-  const handleToolToggle = (toolId: string) => {
-    setSelectedTools(prev => 
-      prev.includes(toolId) 
-        ? prev.filter(t => t !== toolId)
-        : [...prev, toolId]
-    );
-  };
-
-  const handleLanguageToggle = (language: string) => {
-    setSelectedLanguages(prev => 
-      prev.includes(language) 
-        ? prev.filter(l => l !== language)
-        : [...prev, language]
-    );
-  };
-
   const handleStartScan = () => {
     if (!selectedRepoForScan) {
       toast({
@@ -218,29 +185,19 @@ export default function ScanHistory() {
       return;
     }
 
-    if (selectedTools.length === 0) {
-      toast({
-        title: "Configuration Error",
-        description: "Please select at least one scanning tool.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     startScanMutation.mutate({
       repositoryId: selectedRepoForScan.id,
       branch: selectedBranch,
       scanConfig: {
-        tools: selectedTools,
-        languages: selectedLanguages,
-        customRules: customRules ? customRules.split('\n').filter(Boolean) : [],
+        tools: ["semgrep"],
+        languages: selectedRepoForScan.languages || [],
+        customRules: [],
       }
     });
   };
   
   const handleSelectRepository = (repo: any) => {
     setSelectedRepoForScan(repo);
-    setSelectedLanguages(repo.languages || []);
     setSelectedBranch(repo.branches?.[0] || "main");
     setOpenRepoCombobox(false);
   };
@@ -785,66 +742,6 @@ export default function ScanHistory() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Scanning Tools */}
-              <div>
-                <Label className="text-sm font-medium mb-3 block">Scanning Tools</Label>
-                <div className="space-y-3">
-                  {availableTools.map((tool) => (
-                    <div key={tool.id} className="flex items-start space-x-3">
-                      <Checkbox
-                        id={`scan-history-${tool.id}`}
-                        checked={selectedTools.includes(tool.id)}
-                        onCheckedChange={() => handleToolToggle(tool.id)}
-                      />
-                      <div className="space-y-1">
-                        <Label htmlFor={`scan-history-${tool.id}`} className="text-sm font-medium">
-                          {tool.name}
-                        </Label>
-                        <p className="text-xs text-muted-foreground">
-                          {tool.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Languages */}
-              <div>
-                <Label className="text-sm font-medium mb-3 block">Target Languages</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {availableLanguages.map((language) => (
-                    <div key={language} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`scan-history-${language}`}
-                        checked={selectedLanguages.includes(language)}
-                        onCheckedChange={() => handleLanguageToggle(language)}
-                      />
-                      <Label htmlFor={`scan-history-${language}`} className="text-sm capitalize">
-                        {language}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Custom Rules */}
-              <div>
-                <Label htmlFor="scan-history-custom-rules" className="text-sm font-medium mb-3 block">
-                  Custom Rules (Optional)
-                </Label>
-                <Textarea
-                  id="scan-history-custom-rules"
-                  value={customRules}
-                  onChange={(e) => setCustomRules(e.target.value)}
-                  placeholder="Enter custom semgrep rules, one per line..."
-                  className="min-h-[100px]"
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Add custom detection rules for specific vulnerabilities or patterns
-                </p>
-              </div>
             </div>
           )}
 
@@ -859,7 +756,7 @@ export default function ScanHistory() {
             {selectedRepoForScan && selectedBranch && (
               <Button 
                 onClick={handleStartScan}
-                disabled={startScanMutation.isPending || selectedTools.length === 0}
+                disabled={startScanMutation.isPending}
                 data-testid="button-start-scan"
               >
                 <Search className="h-4 w-4 mr-2" />
