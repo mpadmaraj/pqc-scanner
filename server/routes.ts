@@ -764,7 +764,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         switch (token.provider) {
           case "github":
-            const githubResponse = await fetch(`https://api.github.com/orgs/${organization}/repos?per_page=100`, {
+            // Try organization first, then user if organization fails
+            let githubResponse = await fetch(`https://api.github.com/orgs/${organization}/repos?per_page=100`, {
               headers: {
                 "Authorization": `Bearer ${token.accessToken}`,
                 "Accept": "application/vnd.github.v3+json",
@@ -772,9 +773,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             });
 
+            // If organization doesn't exist (404), try as a user
+            if (githubResponse.status === 404) {
+              githubResponse = await fetch(`https://api.github.com/users/${organization}/repos?per_page=100`, {
+                headers: {
+                  "Authorization": `Bearer ${token.accessToken}`,
+                  "Accept": "application/vnd.github.v3+json",
+                  "User-Agent": "Q-Scan-App"
+                }
+              });
+            }
+
             if (!githubResponse.ok) {
               const errorData = await githubResponse.json().catch(() => ({}));
-              throw new Error(errorData.message || `GitHub API error: ${githubResponse.status}`);
+              throw new Error(errorData.message || `GitHub API error: ${githubResponse.status} - ${githubResponse.statusText}`);
             }
 
             repositories = await githubResponse.json();
