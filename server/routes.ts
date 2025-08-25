@@ -74,11 +74,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: req.body.description,
         languages: Array.isArray(req.body.languages) ? req.body.languages : [],
         branches: Array.isArray(req.body.branches) ? req.body.branches : ["main"],
+        availableBranches: Array.isArray(req.body.availableBranches) ? req.body.availableBranches : [],
       };
       
-      // If updating branches without other fields, this is likely a branch refresh from GitHub
-      if (req.body.branches && Object.keys(req.body).length === 1) {
-        console.log(`Updating repository ${req.params.id} with ${req.body.branches.length} branches from GitHub:`, req.body.branches);
+      // If updating only availableBranches, this is a branch refresh from GitHub
+      if (req.body.availableBranches && Object.keys(req.body).length === 1) {
+        console.log(`Updating repository ${req.params.id} with ${req.body.availableBranches.length} available branches from GitHub:`, req.body.availableBranches);
       }
       
       const repository = await storage.updateRepository(req.params.id, updateData);
@@ -98,11 +99,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: req.body.description,
         languages: Array.isArray(req.body.languages) ? req.body.languages : [],
         branches: Array.isArray(req.body.branches) ? req.body.branches : ["main"],
+        availableBranches: Array.isArray(req.body.availableBranches) ? req.body.availableBranches : [],
       };
       
-      // If updating branches without other fields, this is likely a branch refresh from GitHub
-      if (req.body.branches && Object.keys(req.body).length === 1) {
-        console.log(`Updating repository ${req.params.id} with ${req.body.branches.length} branches from GitHub:`, req.body.branches);
+      // If updating only availableBranches, this is a branch refresh from GitHub
+      if (req.body.availableBranches && Object.keys(req.body).length === 1) {
+        console.log(`Updating repository ${req.params.id} with ${req.body.availableBranches.length} available branches from GitHub:`, req.body.availableBranches);
       }
       
       const repository = await storage.updateRepository(req.params.id, updateData);

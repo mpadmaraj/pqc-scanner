@@ -26,7 +26,8 @@ export const repositories = pgTable("repositories", {
   provider: repositoryProviderEnum("provider").notNull(),
   description: text("description"),
   languages: jsonb("languages").$type<string[]>().default([]),
-  branches: jsonb("branches").$type<string[]>().default(["main"]),
+  branches: jsonb("branches").$type<string[]>().default(["main"]), // Selected branches for scanning
+  availableBranches: jsonb("available_branches").$type<string[]>().default([]), // All branches from GitHub
   lastScanAt: timestamp("last_scan_at"),
   integrationId: varchar("integration_id").references(() => integrations.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -258,7 +258,8 @@ export default function ScanRepository() {
         name: editRepoName,
         description: editDescription,
         languages: editSelectedLanguages,
-        branches: editSelectedBranches,
+        branches: editSelectedBranches, // Selected branches for scanning
+        availableBranches: editAvailableBranches, // All available branches from GitHub
       }
     });
   };
@@ -466,11 +467,11 @@ export default function ScanRepository() {
     setEditDescription(repo.description || "");
     setEditSelectedLanguages(repo.languages || []);
     setEditSelectedBranches(repo.branches || ["main"]);
-    setEditAvailableBranches(repo.branches || ["main"]);
+    setEditAvailableBranches(repo.availableBranches || repo.branches || ["main"]);
     setIsEditRepoModalOpen(true);
     
-    // Fetch all available branches from GitHub when opening edit modal
-    if (repo.url && repo.url.includes('github.com')) {
+    // Fetch all available branches from GitHub when opening edit modal if not already cached
+    if (repo.url && repo.url.includes('github.com') && (!repo.availableBranches || repo.availableBranches.length === 0)) {
       await fetchRepositoryBranches(repo.url, repo.id);
     }
   };
@@ -535,11 +536,11 @@ export default function ScanRepository() {
         setAvailableBranches(branches);
         setEditAvailableBranches(branches);
         
-        // If we have a repository ID, update the repository with the fetched branches
+        // If we have a repository ID, update the repository with the fetched available branches
         if (repositoryId && branches.length > 0) {
           try {
             await apiRequest('PUT', `/api/repositories/${repositoryId}`, {
-              branches: branches
+              availableBranches: branches
             });
             // Invalidate repository cache to refresh the UI
             queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
@@ -1641,20 +1642,27 @@ export default function ScanRepository() {
                     Fetching branches...
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
-                    {editAvailableBranches.map((branch) => (
-                      <label key={branch} className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={editSelectedBranches.includes(branch)}
-                          onChange={() => handleEditBranchToggle(branch)}
-                          className="rounded border-gray-300"
-                          data-testid={`checkbox-edit-branch-${branch}`}
-                        />
-                        <span className="text-sm font-mono">{branch}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                      {editAvailableBranches.map((branch) => (
+                        <label key={branch} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editSelectedBranches.includes(branch)}
+                            onChange={() => handleEditBranchToggle(branch)}
+                            className="rounded border-gray-300"
+                            data-testid={`checkbox-edit-branch-${branch}`}
+                          />
+                          <span className="text-sm font-mono">{branch}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {editAvailableBranches.length === 0 && (
+                      <div className="text-sm text-muted-foreground">
+                        No branches available. Click refresh to fetch from GitHub.
+                      </div>
+                    )}
+                  </>
                 )}
                 <p className="text-xs text-muted-foreground">
                   Select branches to track for this repository.
