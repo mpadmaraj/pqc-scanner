@@ -11,7 +11,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, User, Zap, FileText } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { History, Search, Eye, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, User, Zap, FileText, Plus, Github, GitBranch, X, Check, ChevronsUpDown } from "lucide-react";
 import VulnerabilityTable from "@/components/vulnerability-table";
 import CBOMReportView from "@/components/cbom-report-view";
 
@@ -21,8 +27,26 @@ export default function ScanHistory() {
   const [selectedScan, setSelectedScan] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+  // New Scan Modal State
+  const [isNewScanDialogOpen, setIsNewScanDialogOpen] = useState(false);
+  const [selectedRepoForScan, setSelectedRepoForScan] = useState<any>(null);
+  const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [selectedTools, setSelectedTools] = useState<string[]>(["semgrep", "bandit"]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [customRules, setCustomRules] = useState("");
+  const [openRepoCombobox, setOpenRepoCombobox] = useState(false);
 
   const queryClient = useQueryClient();
+  
+  const availableTools = [
+    { id: "semgrep", name: "Semgrep", description: "Static analysis for security vulnerabilities" },
+    { id: "bandit", name: "Bandit", description: "Python security linter" },
+    { id: "pqc-analyzer", name: "PQC Analyzer", description: "Post-quantum cryptography vulnerability detection" },
+    { id: "crypto-scanner", name: "Crypto Scanner", description: "Cryptographic implementation analyzer" }
+  ];
+
+  const availableLanguages = ["java", "javascript", "python", "typescript", "go", "rust", "cpp", "csharp"];
 
   const { data: scans = [], isLoading } = useQuery<Scan[]>({
     queryKey: ["/api/scans"],
@@ -59,6 +83,32 @@ export default function ScanHistory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/scans"] });
+    }
+  });
+  
+  const startScanMutation = useMutation({
+    mutationFn: async (scanData: any) => {
+      return await apiRequest("POST", "/api/scans", scanData);
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Scan started",
+        description: `Scan initiated for ${selectedRepoForScan?.name} on branch ${selectedBranch}. You'll see progress updates here.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/scans"] });
+      setIsNewScanDialogOpen(false);
+      setSelectedRepoForScan(null);
+      setSelectedBranch("");
+      setSelectedTools(["semgrep", "bandit"]);
+      setSelectedLanguages([]);
+      setCustomRules("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Scan failed to start",
+        description: error.message || "Failed to start scan. Please try again.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -132,6 +182,68 @@ export default function ScanHistory() {
     queryClient.invalidateQueries({ queryKey: ["/api/scans"] });
     queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
   };
+  
+  const handleToolToggle = (toolId: string) => {
+    setSelectedTools(prev => 
+      prev.includes(toolId) 
+        ? prev.filter(t => t !== toolId)
+        : [...prev, toolId]
+    );
+  };
+
+  const handleLanguageToggle = (language: string) => {
+    setSelectedLanguages(prev => 
+      prev.includes(language) 
+        ? prev.filter(l => l !== language)
+        : [...prev, language]
+    );
+  };
+
+  const handleStartScan = () => {
+    if (!selectedRepoForScan) {
+      toast({
+        title: "Error",
+        description: "Please select a repository to scan.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!selectedBranch) {
+      toast({
+        title: "Error",
+        description: "Please select a branch to scan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedTools.length === 0) {
+      toast({
+        title: "Configuration Error",
+        description: "Please select at least one scanning tool.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    startScanMutation.mutate({
+      repositoryId: selectedRepoForScan.id,
+      branch: selectedBranch,
+      scanConfig: {
+        tools: selectedTools,
+        languages: selectedLanguages,
+        customRules: customRules ? customRules.split('\n').filter(Boolean) : [],
+      }
+    });
+  };
+  
+  const handleSelectRepository = (repo: any) => {
+    setSelectedRepoForScan(repo);
+    setSelectedLanguages(repo.languages || []);
+    setSelectedBranch(repo.branches?.[0] || "main");
+    setOpenRepoCombobox(false);
+  };
 
   // Download CBOM report function
   const handleDownloadCBOM = async (scanId: string) => {
@@ -194,14 +306,20 @@ export default function ScanHistory() {
               View and manage all vulnerability scan results
             </p>
           </div>
-          <Button
-            onClick={handleRefresh}
-            variant="outline"
-            data-testid="button-refresh"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center space-x-3">
+            <Button onClick={() => setIsNewScanDialogOpen(true)} data-testid="button-new-scan">
+              <Plus className="mr-2 h-4 w-4" />
+              New Scan
+            </Button>
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              data-testid="button-refresh"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -554,6 +672,203 @@ export default function ScanHistory() {
         </Card>
 
       </div>
+
+      {/* Enhanced New Scan Dialog */}
+      <Dialog open={isNewScanDialogOpen} onOpenChange={setIsNewScanDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>New Scan</DialogTitle>
+            <DialogDescription>
+              {selectedRepoForScan ? 
+                `Configure scan settings for "${selectedRepoForScan.name}"` : 
+                "Select a repository and configure scan settings"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!selectedRepoForScan ? (
+            <div className="space-y-4">
+              <Label>Select Repository</Label>
+              <Popover open={openRepoCombobox} onOpenChange={setOpenRepoCombobox}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openRepoCombobox}
+                    className="w-full justify-between"
+                    data-testid="button-select-repository"
+                  >
+                    {selectedRepoForScan
+                      ? selectedRepoForScan.name
+                      : "Search for a repository..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search repositories..." />
+                    <CommandEmpty>No repositories found.</CommandEmpty>
+                    <CommandList>
+                      <CommandGroup>
+                        {Array.isArray(repositories) && repositories.map((repo: any) => (
+                          <CommandItem
+                            key={repo.id}
+                            value={repo.name}
+                            onSelect={() => handleSelectRepository(repo)}
+                            data-testid={`option-repository-${repo.id}`}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                selectedRepoForScan?.id === repo.id ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                            <div className="flex items-center space-x-2">
+                              {repo.provider === "github" && <Github className="h-4 w-4" />}
+                              {repo.provider === "gitlab" && <GitBranch className="h-4 w-4" />}
+                              <span>{repo.name}</span>
+                              {repo.languages && repo.languages.length > 0 && (
+                                <div className="flex gap-1">
+                                  {repo.languages.slice(0, 2).map((lang: string) => (
+                                    <Badge key={lang} variant="secondary" className="text-xs">
+                                      {lang}
+                                    </Badge>
+                                  ))}
+                                  {repo.languages.length > 2 && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      +{repo.languages.length - 2}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 p-3 bg-muted rounded">
+                {selectedRepoForScan.provider === "github" && <Github className="h-4 w-4" />}
+                {selectedRepoForScan.provider === "gitlab" && <GitBranch className="h-4 w-4" />}
+                <span className="font-medium">{selectedRepoForScan.name}</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setSelectedRepoForScan(null);
+                    setSelectedBranch("");
+                  }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Branch Selection */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Branch</Label>
+                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                  <SelectTrigger data-testid="select-branch">
+                    <SelectValue placeholder="Select a branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedRepoForScan.branches && selectedRepoForScan.branches.length > 0 ? (
+                      selectedRepoForScan.branches.map((branch: string) => (
+                        <SelectItem key={branch} value={branch}>
+                          {branch}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="main">main</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Scanning Tools */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Scanning Tools</Label>
+                <div className="space-y-3">
+                  {availableTools.map((tool) => (
+                    <div key={tool.id} className="flex items-start space-x-3">
+                      <Checkbox
+                        id={`scan-history-${tool.id}`}
+                        checked={selectedTools.includes(tool.id)}
+                        onCheckedChange={() => handleToolToggle(tool.id)}
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor={`scan-history-${tool.id}`} className="text-sm font-medium">
+                          {tool.name}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {tool.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Languages */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Target Languages</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {availableLanguages.map((language) => (
+                    <div key={language} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`scan-history-${language}`}
+                        checked={selectedLanguages.includes(language)}
+                        onCheckedChange={() => handleLanguageToggle(language)}
+                      />
+                      <Label htmlFor={`scan-history-${language}`} className="text-sm capitalize">
+                        {language}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Rules */}
+              <div>
+                <Label htmlFor="scan-history-custom-rules" className="text-sm font-medium mb-3 block">
+                  Custom Rules (Optional)
+                </Label>
+                <Textarea
+                  id="scan-history-custom-rules"
+                  value={customRules}
+                  onChange={(e) => setCustomRules(e.target.value)}
+                  placeholder="Enter custom semgrep rules, one per line..."
+                  className="min-h-[100px]"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Add custom detection rules for specific vulnerabilities or patterns
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsNewScanDialogOpen(false);
+              setSelectedRepoForScan(null);
+              setSelectedBranch("");
+            }}>
+              Cancel
+            </Button>
+            {selectedRepoForScan && selectedBranch && (
+              <Button 
+                onClick={handleStartScan}
+                disabled={startScanMutation.isPending || selectedTools.length === 0}
+                data-testid="button-start-scan"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                {startScanMutation.isPending ? "Starting Scan..." : "Start Scan"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

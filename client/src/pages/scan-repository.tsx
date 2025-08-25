@@ -108,24 +108,29 @@ export default function ScanRepository() {
         return;
       }
       
-      // Auto-start scan with semgrep only
+      // Auto-start scan for all selected branches
       try {
-        const scanPayload = {
-          repositoryId: newRepo.id,
-          scanConfig: {
-            tools: ["semgrep"],
-            languages: selectedLanguages,
-            customRules: [],
-          }
-        };
+        const scanPromises = selectedBranches.map(async (branch) => {
+          const scanPayload = {
+            repositoryId: newRepo.id,
+            branch: branch,
+            scanConfig: {
+              tools: ["semgrep"],
+              languages: selectedLanguages,
+              customRules: [],
+            }
+          };
+          
+          return await apiRequest("POST", "/api/scans", scanPayload);
+        });
         
-        await apiRequest("POST", "/api/scans", scanPayload);
+        await Promise.all(scanPromises);
         
         queryClient.invalidateQueries({ queryKey: ["/api/scans"] });
         
         toast({
-          title: "Repository added and scan started",
-          description: `${newRepo.name} has been added and vulnerability scan is now running.`,
+          title: "Repository added and scans started",
+          description: `${newRepo.name} has been added and vulnerability scans are running for ${selectedBranches.length} branch${selectedBranches.length !== 1 ? 'es' : ''}.`,
         });
       } catch (scanError) {
         toast({
