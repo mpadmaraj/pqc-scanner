@@ -2,29 +2,30 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { eq } from 'drizzle-orm';
+import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import ws from 'ws';
 
-// Database schema types (simplified for serverless)
-const cbomReports = {
-  id: '',
-  scanId: '',
-  repositoryId: '', 
-  reportData: '',
-  createdAt: ''
-};
+// Simplified database schema for serverless
+const cbomReports = pgTable('cbom_reports', {
+  id: text('id').primaryKey(),
+  scanId: text('scan_id').notNull(),
+  repositoryId: text('repository_id').notNull(),
+  reportData: text('report_data'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
 
-const vdrReports = {
-  id: '',
-  scanId: '',
-  repositoryId: '',
-  reportData: '',
-  createdAt: ''
-};
+const vdrReports = pgTable('vdr_reports', {
+  id: text('id').primaryKey(),
+  scanId: text('scan_id').notNull(),
+  repositoryId: text('repository_id').notNull(),
+  reportData: text('report_data'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
 
-const repositories = {
-  id: '',
-  name: ''
-};
+const repositories = pgTable('repositories', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+});
 
 // Initialize database connection for serverless
 let db: any = null;
@@ -104,31 +105,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const database = getDatabase();
         
-        // Query for CBOM report
-        const result = await database.execute(`
-          SELECT cr.*, r.name as repository_name 
-          FROM cbom_reports cr 
-          JOIN repositories r ON cr.repository_id = r.id 
-          WHERE cr.scan_id = $1
-        `, [scanId]);
+        // Query for CBOM report using Drizzle ORM
+        const reportResults = await database.select().from(cbomReports).where(eq(cbomReports.scanId, scanId));
         
-        if (!result.rows || result.rows.length === 0) {
+        if (reportResults.length === 0) {
           return res.status(404).json({ error: 'CBOM report not found' });
         }
         
-        const report = result.rows[0];
+        const report = reportResults[0];
+        const repoResults = await database.select().from(repositories).where(eq(repositories.id, report.repositoryId));
+        const repository = repoResults[0];
+        
         
         if (format === 'json') {
           // Return JSON data directly
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Content-Disposition', `attachment; filename="cbom-report-${scanId}.json"`);
-          res.json(JSON.parse(report.report_data || '{}'));
+          res.json(JSON.parse(report.reportData || '{}'));
         } else {
           // For PDF, return simplified text-based report
-          const reportData = JSON.parse(report.report_data || '{}');
+          const reportData = JSON.parse(report.reportData || '{}');
           const textReport = `
-CBOM Report - ${report.repository_name}
-Generated: ${new Date(report.created_at).toLocaleString()}
+CBOM Report - ${repository?.name || 'Unknown Repository'}
+Generated: ${new Date(report.createdAt || '').toLocaleString()}
 Scan ID: ${scanId}
 
 Summary:
@@ -162,31 +161,29 @@ To get the full PDF report, please use the local development server.
       try {
         const database = getDatabase();
         
-        // Query for VDR report
-        const result = await database.execute(`
-          SELECT vr.*, r.name as repository_name 
-          FROM vdr_reports vr 
-          JOIN repositories r ON vr.repository_id = r.id 
-          WHERE vr.scan_id = $1
-        `, [scanId]);
+        // Query for VDR report using Drizzle ORM
+        const reportResults = await database.select().from(vdrReports).where(eq(vdrReports.scanId, scanId));
         
-        if (!result.rows || result.rows.length === 0) {
+        if (reportResults.length === 0) {
           return res.status(404).json({ error: 'VDR report not found' });
         }
         
-        const report = result.rows[0];
+        const report = reportResults[0];
+        const repoResults = await database.select().from(repositories).where(eq(repositories.id, report.repositoryId));
+        const repository = repoResults[0];
+        
         
         if (format === 'json') {
           // Return JSON data directly
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Content-Disposition', `attachment; filename="vdr-report-${scanId}.json"`);
-          res.json(JSON.parse(report.report_data || '{}'));
+          res.json(JSON.parse(report.reportData || '{}'));
         } else {
           // For PDF, return simplified text-based report
-          const reportData = JSON.parse(report.report_data || '{}');
+          const reportData = JSON.parse(report.reportData || '{}');
           const textReport = `
-VDR Report - ${report.repository_name}
-Generated: ${new Date(report.created_at).toLocaleString()}
+VDR Report - ${repository?.name || 'Unknown Repository'}
+Generated: ${new Date(report.createdAt || '').toLocaleString()}
 Scan ID: ${scanId}
 
 Summary:
