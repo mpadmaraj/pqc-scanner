@@ -1,12 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Simplified API handler that handles the specific branch fetching endpoint
+// Simplified API handler that handles specific endpoints needed on Vercel
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { url: repoUrl } = req.query;
+    const requestUrl = req.url || '';
 
-    // Handle temp branches endpoint specifically
-    if (req.url?.includes('/repositories/temp/branches')) {
+    // Handle temp branches endpoint
+    if (requestUrl.includes('/repositories/temp/branches')) {
       if (!repoUrl || typeof repoUrl !== 'string') {
         return res.status(400).json({ error: "Repository URL is required" });
       }
@@ -48,7 +49,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           details: error instanceof Error ? error.message : "Unknown error"
         });
       }
-    } else {
+    }
+    // Handle CBOM report downloads
+    else if (requestUrl.includes('/cbom-reports/') && (requestUrl.includes('/pdf') || requestUrl.includes('/json'))) {
+      // For now, return a message that this feature is only available in development
+      res.status(503).json({ 
+        error: 'Report downloads are only available in development environment',
+        message: 'Please use the local development server to download reports'
+      });
+    }
+    // Handle VDR report downloads
+    else if (requestUrl.includes('/vdr-reports/') && (requestUrl.includes('/pdf') || requestUrl.includes('/json'))) {
+      // For now, return a message that this feature is only available in development
+      res.status(503).json({ 
+        error: 'Report downloads are only available in development environment',
+        message: 'Please use the local development server to download reports'
+      });
+    }
+    else {
       // For all other API routes, return a basic response
       res.status(404).json({ error: 'API endpoint not implemented in serverless function' });
     }

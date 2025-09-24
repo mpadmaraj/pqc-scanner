@@ -350,7 +350,6 @@ export default function ScanHistory() {
                       <TableHead>Source</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Scan Date & Time</TableHead>
-                      <TableHead>Duration</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -454,11 +453,6 @@ export default function ScanHistory() {
                                 }
                               </div>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm" data-testid={`text-duration-${scan.id}`}>
-                              {formatDuration(scan.startedAt, scan.completedAt)}
-                            </div>
                           </TableCell>
                           <TableCell>
                             <TooltipProvider>
