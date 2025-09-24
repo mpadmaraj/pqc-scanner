@@ -47,6 +47,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { url: repoUrl } = req.query;
     const requestUrl = req.url || '';
+    
+    // Debug logging
+    console.log('Request URL:', requestUrl);
+    console.log('Query params:', req.query);
 
     // Handle temp branches endpoint
     if (requestUrl.includes('/repositories/temp/branches')) {
@@ -93,13 +97,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
     // Handle CBOM report downloads
-    else if (requestUrl.includes('/cbom-reports/')) {
-      const match = requestUrl.match(/\/cbom-reports\/([^\/]+)\/(pdf|json)/);
-      if (!match) {
-        return res.status(400).json({ error: 'Invalid report URL format' });
+    else if (requestUrl.includes('cbom-reports')) {
+      console.log('Processing CBOM report request for URL:', requestUrl);
+      
+      // Extract scan ID from URL path
+      const pathParts = requestUrl.split('/').filter(part => part.length > 0);
+      console.log('Path parts:', pathParts);
+      
+      let scanId = '';
+      let format = 'json';
+      
+      // Find cbom-reports index and extract scan ID
+      const cbomIndex = pathParts.findIndex(part => part === 'cbom-reports');
+      if (cbomIndex >= 0 && cbomIndex < pathParts.length - 1) {
+        scanId = pathParts[cbomIndex + 1];
+        if (cbomIndex < pathParts.length - 2) {
+          format = pathParts[cbomIndex + 2] || 'json';
+        }
       }
       
-      const [, scanId, format] = match;
+      console.log('Extracted scan ID:', scanId);
+      console.log('Extracted format:', format);
+      
+      if (!scanId) {
+        return res.status(400).json({ error: 'Invalid report URL format - no scan ID found' });
+      }
       
       try {
         const database = getDatabase();
@@ -150,12 +172,13 @@ To get the full PDF report, please use the local development server.
     }
     // Handle VDR report downloads  
     else if (requestUrl.includes('/vdr-reports/')) {
-      const match = requestUrl.match(/\/vdr-reports\/([^\/]+)\/(pdf|json)/);
+      // Support both /vdr-reports/scanId/format and /vdr-reports/scanId (default to json)
+      const match = requestUrl.match(/\/vdr-reports\/([^\/]+)(?:\/(pdf|json))?/);
       if (!match) {
         return res.status(400).json({ error: 'Invalid report URL format' });
       }
       
-      const [, scanId, format] = match;
+      const [, scanId, format = 'json'] = match;
       
       try {
         const database = getDatabase();
