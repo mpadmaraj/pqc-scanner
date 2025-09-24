@@ -11,17 +11,17 @@ const scanStatusEnum = pgEnum("scan_status", ["pending", "scanning", "completed"
 
 // Simplified database schema for serverless (matching actual schema)
 const cbomReports = pgTable('cbom_reports', {
-  id: text('id').primaryKey(),
-  scanId: text('scan_id'),
-  repositoryId: text('repository_id').notNull(),
-  content: text('content').notNull(), // This is the actual column name
+  id: varchar('id').primaryKey(),
+  scanId: varchar('scan_id'),
+  repositoryId: varchar('repository_id').notNull(),
+  content: jsonb('content').notNull(), // JSONB type - matches actual database
   createdAt: timestamp('created_at').defaultNow(),
 });
 
 const vdrReports = pgTable('vdr_reports', {
-  id: text('id').primaryKey(),
-  vulnerabilityId: text('vulnerability_id'),
-  content: text('content').notNull(), // This is the actual column name  
+  id: varchar('id').primaryKey(),
+  vulnerabilityId: varchar('vulnerability_id'),
+  content: jsonb('content').notNull(), // JSONB type - matches actual database
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -185,13 +185,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         
         if (format === 'json') {
-          // Return JSON data directly
+          // Return JSON data directly - content is already parsed from jsonb
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Content-Disposition', `attachment; filename="cbom-report-${scanId}.json"`);
-          res.json(JSON.parse(report.content || '{}'));
+          res.json(report.content || {});
         } else {
           // For PDF, return simplified text-based report
-          const reportData = JSON.parse(report.content || '{}');
+          const reportData = report.content || {}; // Already parsed from jsonb
           const textReport = `
 CBOM Report - ${repository?.name || 'Unknown Repository'}
 Generated: ${new Date(report.createdAt || '').toLocaleString()}
@@ -243,13 +243,13 @@ To get the full PDF report, please use the local development server.
         
         
         if (format === 'json') {
-          // Return JSON data directly
+          // Return JSON data directly - content is already parsed from jsonb
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Content-Disposition', `attachment; filename="vdr-report-${scanId}.json"`);
-          res.json(JSON.parse(report.content || '{}'));
+          res.json(report.content || {});
         } else {
           // For PDF, return simplified text-based report
-          const reportData = JSON.parse(report.content || '{}');
+          const reportData = report.content || {}; // Already parsed from jsonb
           const textReport = `
 VDR Report - ${repository?.name || 'Unknown Repository'}
 Generated: ${new Date(report.createdAt || '').toLocaleString()}
