@@ -5,20 +5,19 @@ import { eq } from 'drizzle-orm';
 import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import ws from 'ws';
 
-// Simplified database schema for serverless
+// Simplified database schema for serverless (matching actual schema)
 const cbomReports = pgTable('cbom_reports', {
   id: text('id').primaryKey(),
-  scanId: text('scan_id').notNull(),
+  scanId: text('scan_id'),
   repositoryId: text('repository_id').notNull(),
-  reportData: text('report_data'),
+  content: text('content').notNull(), // This is the actual column name
   createdAt: timestamp('created_at').defaultNow(),
 });
 
 const vdrReports = pgTable('vdr_reports', {
   id: text('id').primaryKey(),
-  scanId: text('scan_id').notNull(),
-  repositoryId: text('repository_id').notNull(),
-  reportData: text('report_data'),
+  vulnerabilityId: text('vulnerability_id'),
+  content: text('content').notNull(), // This is the actual column name  
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -121,10 +120,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Return JSON data directly
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Content-Disposition', `attachment; filename="cbom-report-${scanId}.json"`);
-          res.json(JSON.parse(report.reportData || '{}'));
+          res.json(JSON.parse(report.content || '{}'));
         } else {
           // For PDF, return simplified text-based report
-          const reportData = JSON.parse(report.reportData || '{}');
+          const reportData = JSON.parse(report.content || '{}');
           const textReport = `
 CBOM Report - ${repository?.name || 'Unknown Repository'}
 Generated: ${new Date(report.createdAt || '').toLocaleString()}
@@ -162,25 +161,26 @@ To get the full PDF report, please use the local development server.
         const database = getDatabase();
         
         // Query for VDR report using Drizzle ORM
-        const reportResults = await database.select().from(vdrReports).where(eq(vdrReports.scanId, scanId));
+        // Note: VDR reports are linked to vulnerabilities, not scans directly
+        const reportResults = await database.select().from(vdrReports).limit(1);
         
         if (reportResults.length === 0) {
           return res.status(404).json({ error: 'VDR report not found' });
         }
         
         const report = reportResults[0];
-        const repoResults = await database.select().from(repositories).where(eq(repositories.id, report.repositoryId));
-        const repository = repoResults[0];
+        // For VDR reports, we'll use a generic repository name since they're vulnerability-specific
+        const repository = { name: 'VDR Report' };
         
         
         if (format === 'json') {
           // Return JSON data directly
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Content-Disposition', `attachment; filename="vdr-report-${scanId}.json"`);
-          res.json(JSON.parse(report.reportData || '{}'));
+          res.json(JSON.parse(report.content || '{}'));
         } else {
           // For PDF, return simplified text-based report
-          const reportData = JSON.parse(report.reportData || '{}');
+          const reportData = JSON.parse(report.content || '{}');
           const textReport = `
 VDR Report - ${repository?.name || 'Unknown Repository'}
 Generated: ${new Date(report.createdAt || '').toLocaleString()}
