@@ -2,8 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { eq } from 'drizzle-orm';
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, integer, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import ws from 'ws';
+
+// Enums
+const scanStatusEnum = pgEnum("scan_status", ["pending", "scanning", "completed", "failed"]);
 
 // Simplified database schema for serverless (matching actual schema)
 const cbomReports = pgTable('cbom_reports', {
@@ -22,8 +26,50 @@ const vdrReports = pgTable('vdr_reports', {
 });
 
 const repositories = pgTable('repositories', {
-  id: text('id').primaryKey(),
+  id: varchar('id').primaryKey(),
   name: text('name').notNull(),
+});
+
+const scans = pgTable('scans', {
+  id: varchar('id').primaryKey(),
+  repositoryId: varchar('repository_id').notNull(),
+  branch: text('branch'),
+  status: scanStatusEnum('status'),
+  progress: integer('progress'),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  errorMessage: text('error_message'),
+  totalFiles: integer('total_files'),
+  integrationId: varchar('integration_id'),
+  scanConfig: jsonb('scan_config'),
+  createdAt: timestamp('created_at'),
+});
+
+const integrations = pgTable('integrations', {
+  id: varchar('id').primaryKey(),
+  name: text('name').notNull(),
+  type: text('type').notNull(),
+  apiKey: text('api_key').notNull(),
+  config: jsonb('config'),
+  isActive: text('is_active'),
+  lastUsed: timestamp('last_used'),
+  createdAt: timestamp('created_at'),
+});
+
+const providerTokens = pgTable('provider_tokens', {
+  id: varchar('id').primaryKey(),
+  userId: varchar('user_id').notNull(),
+  name: varchar('name').notNull(),
+  provider: varchar('provider').notNull(),
+  tokenType: varchar('token_type').notNull(),
+  accessToken: varchar('access_token').notNull(),
+  refreshToken: varchar('refresh_token'),
+  expiresAt: timestamp('expires_at'),
+  scopes: varchar('scopes'),
+  organizationAccess: jsonb('organization_access'),
+  isActive: text('is_active'),
+  createdAt: timestamp('created_at'),
+  updatedAt: timestamp('updated_at'),
 });
 
 // Initialize database connection for serverless
@@ -226,6 +272,121 @@ To get the full PDF report, please use the local development server.
           error: "Failed to download VDR report", 
           details: error instanceof Error ? error.message : "Unknown error"
         });
+      }
+    }
+    // Handle provider tokens endpoints
+    else if (requestUrl.includes('/settings/provider-tokens')) {
+      if (req.method === 'GET') {
+        try {
+          const database = getDatabase();
+          // Using hardcoded user ID like the main server
+          const userId = "demo-user";
+          const tokens = await database.select().from(providerTokens).where(eq(providerTokens.userId, userId));
+          res.json(tokens);
+        } catch (error) {
+          console.error("Provider tokens fetch error:", error);
+          res.status(500).json({ error: "Failed to get provider tokens" });
+        }
+      } else if (req.method === 'POST') {
+        try {
+          const { name, provider, accessToken, organizationAccess } = req.body;
+          
+          if (!name || !provider || !accessToken) {
+            return res.status(400).json({ error: "Name, provider and access token are required" });
+          }
+
+          const database = getDatabase();
+          const userId = "demo-user";
+
+          // Check if a token with this name already exists
+          const existingTokens = await database.select().from(providerTokens)
+            .where(eq(providerTokens.userId, userId));
+          const existingToken = existingTokens.find(t => t.name === name);
+          
+          if (existingToken) {
+            return res.status(400).json({ error: "A provider with this name already exists. Please choose a different name." });
+          }
+
+          const tokenData = {
+            id: crypto.randomUUID(),
+            userId,
+            name,
+            provider,
+            accessToken,
+            organizationAccess: organizationAccess || [],
+            tokenType: "personal_access_token",
+            isActive: "true",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          await database.insert(providerTokens).values(tokenData);
+          res.status(201).json(tokenData);
+        } catch (error) {
+          console.error("Provider tokens create error:", error);
+          res.status(500).json({ error: "Failed to create provider token" });
+        }
+      } else {
+        res.status(405).json({ error: "Method not allowed" });
+      }
+    }
+    // Handle scans endpoints
+    else if (requestUrl.includes('/scans') && !requestUrl.includes('cbom-reports') && !requestUrl.includes('vdr-reports')) {
+      if (req.method === 'GET') {
+        try {
+          const database = getDatabase();
+          const scansData = await database.select().from(scans);
+          res.json(scansData);
+        } catch (error) {
+          console.error("Scans fetch error:", error);
+          res.status(500).json({ error: "Failed to fetch scans" });
+        }
+      } else if (req.method === 'POST') {
+        try {
+          const { repositoryId, branch, scanConfig } = req.body;
+          
+          if (!repositoryId) {
+            return res.status(400).json({ error: "Repository ID is required" });
+          }
+
+          const database = getDatabase();
+          const scanData = {
+            id: crypto.randomUUID(),
+            repositoryId,
+            branch: branch || "main",
+            status: "pending" as const,
+            progress: 0,
+            totalFiles: 0,
+            scanConfig,
+            createdAt: new Date(),
+          };
+
+          await database.insert(scans).values(scanData);
+          
+          // Note: In production, you'd want to trigger the actual scanning process here
+          // For now, we'll just create the scan record
+          res.json({ ...scanData, jobId: `job-${scanData.id}` });
+        } catch (error) {
+          console.error("Scan create error:", error);
+          res.status(500).json({ error: "Failed to create scan" });
+        }
+      } else {
+        res.status(405).json({ error: "Method not allowed" });
+      }
+    }
+    // Handle integrations endpoints
+    else if (requestUrl.includes('/integrations')) {
+      if (req.method === 'GET') {
+        try {
+          const database = getDatabase();
+          const integrationsData = await database.select().from(integrations);
+          res.json(integrationsData);
+        } catch (error) {
+          console.error("Integrations fetch error:", error);
+          res.status(500).json({ error: "Failed to fetch integrations" });
+        }
+      } else {
+        res.status(405).json({ error: "Method not allowed" });
       }
     }
     else {
