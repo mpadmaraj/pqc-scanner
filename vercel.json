@@ -1,12 +1,12 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/public",
   "builds": [
     {
-      "src": "package.json",
-      "use": "@vercel/node",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
+      "src": "dist/index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -18,9 +18,5 @@
       "src": "/(.*)",
       "dest": "/dist/public/$1"
     }
-  ],
-  "outputDirectory": "dist/public",
-  "installCommand": "npm install",
-  "buildCommand": "npm run build",
-  "startCommand": "node dist/index.js"
+  ]
 }
