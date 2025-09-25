@@ -152,6 +152,33 @@ export const integrations = pgTable("integrations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const scanJobToolEnum = pgEnum("scan_job_tool", ["semgrep", "cbomkit", "both"]);
+export const scanJobStatusEnum = pgEnum("scan_job_status", ["QUEUED", "RUNNING", "COMPLETED", "FAILED"]);
+
+export const scanJob = pgTable("scan_job", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  repoUrl: text("repo_url").notNull(),
+  ref: text("ref"),
+  tool: text("tool").notNull().default("semgrep"),
+  status: text("status").notNull().default("QUEUED"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  semgrepOutput: jsonb("semgrep_output"),
+  cbomkitOutput: jsonb("cbomkit_output"),
+  pqcScore: integer("pqc_score"),
+  errorMessage: text("error_message"),
+});
+
+export const insertScanJobSchema = createInsertSchema(scanJob).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ScanJob = typeof scanJob.$inferSelect;
+export type InsertScanJob = z.infer<typeof insertScanJobSchema>;
+
+// ...existing code...
 // Relations
 export const repositoriesRelations = relations(repositories, ({ one, many }) => ({
   scans: many(scans),
