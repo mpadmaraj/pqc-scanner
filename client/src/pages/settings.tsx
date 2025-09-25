@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { ProviderToken } from "@shared/schema";
+import type { ProviderToken, Integration } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +13,280 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Github, GitlabIcon as Gitlab, Settings as SettingsIcon, Plus, Eye, EyeOff, CheckCircle, AlertCircle, Trash2, RefreshCw, ExternalLink, BookOpen, Loader2 } from "lucide-react";
+import { Github, GitlabIcon as Gitlab, Settings as SettingsIcon, Plus, Eye, EyeOff, CheckCircle, AlertCircle, Trash2, RefreshCw, ExternalLink, BookOpen, Loader2, Globe, TestTube } from "lucide-react";
 import { SiBitbucket } from "react-icons/si";
+
+// External Scanner Integrations Component
+function ExternalScannerIntegrations() {
+  const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
+  const [integrationName, setIntegrationName] = useState("");
+  const [scanUrl, setScanUrl] = useState("");
+  const [statusUrl, setStatusUrl] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: externalScanners = [], isLoading: loadingScanners } = useQuery<Integration[]>({
+    queryKey: ["/api/integrations"],
+    select: (integrations) => integrations?.filter((integration: Integration) => integration.type === "external_scanner") || []
+  });
+
+  const addScannerMutation = useMutation({
+    mutationFn: async (data: { name: string; config: { scanUrl: string; statusUrl: string; enabled: boolean } }) => {
+      return await apiRequest("POST", "/api/integrations", {
+        name: data.name,
+        type: "external_scanner",
+        config: data.config
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+      setShowIntegrationDialog(false);
+      setIntegrationName("");
+      setScanUrl("");
+      setStatusUrl("");
+      toast({
+        title: "External scanner added",
+        description: "Your external scanner integration has been configured successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add external scanner integration.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteScannerMutation = useMutation({
+    mutationFn: async (scannerId: string) => {
+      return await apiRequest("DELETE", `/api/integrations/${scannerId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+      toast({
+        title: "External scanner removed",
+        description: "Scanner integration has been deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove external scanner integration.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAddScanner = () => {
+    if (!integrationName.trim() || !scanUrl.trim() || !statusUrl.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please provide integration name, scan URL, and status URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addScannerMutation.mutate({
+      name: integrationName.trim(),
+      config: {
+        scanUrl: scanUrl.trim(),
+        statusUrl: statusUrl.trim(),
+        enabled: true
+      }
+    });
+  };
+
+  if (loadingScanners) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-medium">Connected External Scanners</h3>
+          <p className="text-sm text-muted-foreground">
+            External scanning services for additional vulnerability detection
+          </p>
+        </div>
+        <Dialog open={showIntegrationDialog} onOpenChange={setShowIntegrationDialog}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-add-external-scanner">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Scanner
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Add External Scanner Integration</DialogTitle>
+              <DialogDescription>
+                Connect an external scanning service to extend vulnerability detection capabilities.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Integration Name</Label>
+                <Input
+                  data-testid="input-integration-name"
+                  type="text"
+                  value={integrationName}
+                  onChange={(e) => setIntegrationName(e.target.value)}
+                  placeholder="Enter a name for this scanner (e.g., Production Scanner, Dev Scanner)"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Scan URL</Label>
+                <Input
+                  data-testid="input-scan-url"
+                  type="url"
+                  value={scanUrl}
+                  onChange={(e) => setScanUrl(e.target.value)}
+                  placeholder="https://scanner.example.com/api/v1/scans"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Endpoint that accepts POST requests to trigger scans
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status URL</Label>
+                <Input
+                  data-testid="input-status-url"
+                  type="url"
+                  value={statusUrl}
+                  onChange={(e) => setStatusUrl(e.target.value)}
+                  placeholder="https://scanner.example.com/api/v1/scans/"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Base URL for checking scan status (scan ID will be appended)
+                </p>
+              </div>
+
+              <div className="bg-muted p-3 rounded-lg">
+                <h4 className="font-medium text-sm mb-2">Expected API Format</h4>
+                <div className="text-xs space-y-1">
+                  <p><strong>POST Request:</strong> {"{ \"repoUrl\": \"...\", \"tool\": \"both\", \"branch\": \"main\" }"}</p>
+                  <p><strong>Response:</strong> {"{ \"status\": \"QUEUED\", \"id\": \"scan-id\" }"}</p>
+                  <p><strong>Status Check:</strong> Poll until status becomes "COMPLETED" or "FAILED"</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowIntegrationDialog(false)}
+                  data-testid="button-cancel-scanner"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAddScanner}
+                  disabled={!integrationName.trim() || !scanUrl.trim() || !statusUrl.trim() || addScannerMutation.isPending}
+                  data-testid="button-save-scanner"
+                >
+                  {addScannerMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Add Integration"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {externalScanners.length === 0 ? (
+        <div className="border border-dashed rounded-lg p-8 text-center">
+          <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="font-medium mb-2">No External Scanners</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Connect external scanning services to extend your vulnerability detection capabilities.
+          </p>
+          <Button onClick={() => setShowIntegrationDialog(true)} variant="outline" data-testid="button-add-first-scanner">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Your First Scanner
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {externalScanners.map((scanner) => (
+            <Card key={scanner.id}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <TestTube className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium" data-testid={`text-scanner-name-${scanner.id}`}>
+                        {scanner.name}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        External Scanner • Added {scanner.createdAt ? new Date(scanner.createdAt).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={scanner.isActive ? "default" : "secondary"}>
+                      {scanner.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" data-testid={`button-delete-scanner-${scanner.id}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remove External Scanner</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to remove this external scanner integration?
+                            This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel data-testid="button-cancel-delete-scanner">Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            data-testid="button-confirm-delete-scanner"
+                            onClick={() => deleteScannerMutation.mutate(scanner.id)}
+                          >
+                            Remove Integration
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+                <div className="mt-3 space-y-2">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Scan URL</Label>
+                    <p className="text-sm font-mono break-all">{scanner.config.scanUrl || 'Not configured'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Status URL</Label>
+                    <p className="text-sm font-mono break-all">{scanner.config.statusUrl || 'Not configured'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Settings() {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
