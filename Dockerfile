@@ -31,8 +31,11 @@ RUN apk add --no-cache \
     openjdk11-jre \
     git
 
-# Install scanning tools
-RUN pip3 install bandit semgrep
+# Install scanning tools using virtual environment
+RUN python3 -m venv /opt/scanner-tools && \
+    /opt/scanner-tools/bin/pip install bandit semgrep && \
+    ln -s /opt/scanner-tools/bin/bandit /usr/local/bin/bandit && \
+    ln -s /opt/scanner-tools/bin/semgrep /usr/local/bin/semgrep
 RUN wget -O /usr/local/bin/pmd.jar https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.55.0/pmd-bin-6.55.0.zip && \
     unzip -j /usr/local/bin/pmd-bin-6.55.0.zip "*/lib/pmd-*.jar" -d /usr/local/bin/ && \
     rm /usr/local/bin/pmd-bin-6.55.0.zip
