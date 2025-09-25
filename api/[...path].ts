@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { eq } from 'drizzle-orm';
-import { pgTable, text, timestamp, varchar, integer, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, integer, jsonb, pgEnum, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import ws from 'ws';
 
@@ -51,7 +51,7 @@ const integrations = pgTable('integrations', {
   type: text('type').notNull(),
   apiKey: text('api_key').notNull(),
   config: jsonb('config'),
-  isActive: text('is_active'),
+  isActive: boolean('is_active'),
   lastUsed: timestamp('last_used'),
   createdAt: timestamp('created_at'),
 });
@@ -67,7 +67,7 @@ const providerTokens = pgTable('provider_tokens', {
   expiresAt: timestamp('expires_at'),
   scopes: varchar('scopes'),
   organizationAccess: jsonb('organization_access'),
-  isActive: text('is_active'),
+  isActive: boolean('is_active'),
   createdAt: timestamp('created_at'),
   updatedAt: timestamp('updated_at'),
 });
@@ -315,7 +315,7 @@ To get the full PDF report, please use the local development server.
             accessToken,
             organizationAccess: organizationAccess || [],
             tokenType: "personal_access_token",
-            isActive: "true",
+            isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
           };
