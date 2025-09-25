@@ -19,6 +19,8 @@ import { SiBitbucket } from "react-icons/si";
 // External Scanner Integrations Component
 function ExternalScannerIntegrations() {
   const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingScanner, setEditingScanner] = useState<Integration | null>(null);
   const [integrationName, setIntegrationName] = useState("");
   const [scanUrl, setScanUrl] = useState("");
   const [statusUrl, setStatusUrl] = useState("");
@@ -41,9 +43,7 @@ function ExternalScannerIntegrations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
       setShowIntegrationDialog(false);
-      setIntegrationName("");
-      setScanUrl("");
-      setStatusUrl("");
+      resetForm();
       toast({
         title: "External scanner added",
         description: "Your external scanner integration has been configured successfully.",
@@ -53,6 +53,31 @@ function ExternalScannerIntegrations() {
       toast({
         title: "Error",
         description: error.message || "Failed to add external scanner integration.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updateScannerMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string; config: { scanUrl: string; statusUrl: string; enabled: boolean } }) => {
+      return await apiRequest("PATCH", `/api/integrations/${data.id}`, {
+        name: data.name,
+        config: data.config
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+      setShowEditDialog(false);
+      resetForm();
+      toast({
+        title: "External scanner updated",
+        description: "Your external scanner integration has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update external scanner integration.",
         variant: "destructive",
       });
     }
@@ -78,6 +103,13 @@ function ExternalScannerIntegrations() {
     }
   });
 
+  const resetForm = () => {
+    setIntegrationName("");
+    setScanUrl("");
+    setStatusUrl("");
+    setEditingScanner(null);
+  };
+
   const handleAddScanner = () => {
     if (!integrationName.trim() || !scanUrl.trim() || !statusUrl.trim()) {
       toast({
@@ -89,6 +121,35 @@ function ExternalScannerIntegrations() {
     }
 
     addScannerMutation.mutate({
+      name: integrationName.trim(),
+      config: {
+        scanUrl: scanUrl.trim(),
+        statusUrl: statusUrl.trim(),
+        enabled: true
+      }
+    });
+  };
+
+  const handleEditScanner = (scanner: Integration) => {
+    setEditingScanner(scanner);
+    setIntegrationName(scanner.name);
+    setScanUrl(scanner.config.scanUrl || "");
+    setStatusUrl(scanner.config.statusUrl || "");
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateScanner = () => {
+    if (!editingScanner || !integrationName.trim() || !scanUrl.trim() || !statusUrl.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please provide integration name, scan URL, and status URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateScannerMutation.mutate({
+      id: editingScanner.id,
       name: integrationName.trim(),
       config: {
         scanUrl: scanUrl.trim(),
@@ -205,6 +266,86 @@ function ExternalScannerIntegrations() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Scanner Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Edit External Scanner Integration</DialogTitle>
+              <DialogDescription>
+                Update your external scanning service configuration.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Integration Name</Label>
+                <Input
+                  data-testid="input-edit-integration-name"
+                  type="text"
+                  value={integrationName}
+                  onChange={(e) => setIntegrationName(e.target.value)}
+                  placeholder="Enter a name for this scanner (e.g., Production Scanner, Dev Scanner)"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Scan URL</Label>
+                <Input
+                  data-testid="input-edit-scan-url"
+                  type="url"
+                  value={scanUrl}
+                  onChange={(e) => setScanUrl(e.target.value)}
+                  placeholder="https://scanner.example.com/api/v1/scans"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Endpoint that accepts POST requests to trigger scans
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status URL</Label>
+                <Input
+                  data-testid="input-edit-status-url"
+                  type="url"
+                  value={statusUrl}
+                  onChange={(e) => setStatusUrl(e.target.value)}
+                  placeholder="https://scanner.example.com/api/v1/scans/"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Base URL for checking scan status (scan ID will be appended)
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    resetForm();
+                  }}
+                  data-testid="button-cancel-edit-scanner"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleUpdateScanner}
+                  disabled={!integrationName.trim() || !scanUrl.trim() || !statusUrl.trim() || updateScannerMutation.isPending}
+                  data-testid="button-save-edit-scanner"
+                >
+                  {updateScannerMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Integration"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {externalScanners.length === 0 ? (
@@ -242,6 +383,14 @@ function ExternalScannerIntegrations() {
                     <Badge variant={scanner.isActive ? "default" : "secondary"}>
                       {scanner.isActive ? "Active" : "Inactive"}
                     </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleEditScanner(scanner)}
+                      data-testid={`button-edit-scanner-${scanner.id}`}
+                    >
+                      <SettingsIcon className="h-4 w-4" />
+                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm" data-testid={`button-delete-scanner-${scanner.id}`}>

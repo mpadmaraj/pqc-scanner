@@ -145,6 +145,8 @@ export const integrations = pgTable("integrations", {
     projectKey?: string;
     webhookUrl?: string;
     permissions?: string[];
+    scanUrl?: string; // For external scanner integrations
+    statusUrl?: string; // For external scanner integrations
     enabled: boolean;
   }>().notNull(),
   isActive: boolean("is_active").default(true),
