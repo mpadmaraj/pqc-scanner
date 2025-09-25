@@ -27,6 +27,16 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split react and recharts into separate chunks
+          "react-vendor": ["react", "react-dom"],
+          "recharts": ["recharts"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 800, // Increase warning limit if needed
   },
   server: {
     fs: {

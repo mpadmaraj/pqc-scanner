@@ -210,7 +210,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="stat-total-repositories">
                     {detailedStats.totalRepositories}
@@ -229,7 +229,7 @@ export default function Dashboard() {
                   </div>
                   <div className="text-sm text-red-600 dark:text-red-400">Total Vulnerabilities</div>
                 </div>
-                <div className="text-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                {/* <div className="text-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
                   <div className="text-xs font-medium text-purple-600 dark:text-purple-400" data-testid="stat-last-scan-date">
                     {detailedStats.lastScanDate 
                       ? new Date(detailedStats.lastScanDate).toLocaleDateString()
@@ -237,7 +237,7 @@ export default function Dashboard() {
                     }
                   </div>
                   <div className="text-sm text-purple-600 dark:text-purple-400">Last Scan</div>
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>
