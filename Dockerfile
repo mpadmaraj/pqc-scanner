@@ -10,8 +10,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install all dependencies (including dev dependencies needed for build)
+RUN npm ci && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -36,9 +36,9 @@ RUN python3 -m venv /opt/scanner-tools && \
     /opt/scanner-tools/bin/pip install bandit semgrep && \
     ln -s /opt/scanner-tools/bin/bandit /usr/local/bin/bandit && \
     ln -s /opt/scanner-tools/bin/semgrep /usr/local/bin/semgrep
-RUN wget -O /usr/local/bin/pmd.jar https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.55.0/pmd-bin-6.55.0.zip && \
-    unzip -j /usr/local/bin/pmd-bin-6.55.0.zip "*/lib/pmd-*.jar" -d /usr/local/bin/ && \
-    rm /usr/local/bin/pmd-bin-6.55.0.zip
+RUN wget -O /tmp/pmd-bin-6.55.0.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.55.0/pmd-bin-6.55.0.zip && \
+    unzip -j /tmp/pmd-bin-6.55.0.zip "*/lib/pmd-*.jar" -d /usr/local/bin/ && \
+    rm /tmp/pmd-bin-6.55.0.zip
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs && \
