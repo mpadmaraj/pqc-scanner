@@ -8,6 +8,7 @@ import { Request, Response } from 'express';
 import { storage } from '../storage';
 import { scannerService } from '../services/scanner';
 import { integrationsService } from '../services/integrations';
+import { externalScannerService } from '../services/external-scanner';
 import { insertScanSchema } from '@shared/schema';
 import { createAppError } from '../middleware/error-handler';
 
@@ -73,7 +74,7 @@ export async function createScan(req: Request, res: Response) {
   // Create the scan record
   const scan = await storage.createScan(scanData);
   
-  // Start the scan asynchronously
+  // Start the built-in scan asynchronously
   scannerService.startScan(scan.id, repositoryId, scanConfig)
     .catch(error => {
       console.error(`Scan ${scan.id} failed:`, error);
@@ -84,6 +85,40 @@ export async function createScan(req: Request, res: Response) {
         completedAt: new Date()
       });
     });
+
+  // Check for external scanner integrations and trigger them as well
+  try {
+    const externalScanners = await externalScannerService.getExternalScannerIntegrations();
+    if (externalScanners.length > 0) {
+      console.log(`Found ${externalScanners.length} external scanner integrations for scan ${scan.id}`);
+      
+      // Trigger external scans for each integration
+      for (const integration of externalScanners) {
+        if (integration.isActive && integration.config.enabled) {
+          console.log(`Triggering external scan with integration: ${integration.name} (${integration.id})`);
+          
+          externalScannerService.triggerExternalScan(
+            repositoryId,
+            scan.id,
+            repository.url,
+            branch,
+            integration.id
+          ).then(result => {
+            if (result.success) {
+              console.log(`External scan triggered successfully for integration ${integration.name}: ${result.externalScanId}`);
+            } else {
+              console.error(`Failed to trigger external scan for integration ${integration.name}:`, result.error);
+            }
+          }).catch(error => {
+            console.error(`Error triggering external scan for integration ${integration.name}:`, error);
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking external scanner integrations:', error);
+    // Don't fail the entire scan if external scanners fail
+  }
   
   res.status(201).json(scan);
 }

@@ -7,6 +7,7 @@ import { vdrService } from "./services/vdr";
 import { integrationsService } from "./services/integrations";
 import { initializeDefaultIntegrations } from "./services/integrations";
 import { repositoryImportService } from "./services/repository-import";
+import { externalScannerService } from "./services/external-scanner";
 import { pdfGenerator } from "./services/pdf-generator";
 import { githubAPI } from "./services/github-api";
 import path from 'path';
@@ -950,6 +951,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to rescan repositories" 
+      });
+    }
+  });
+
+  // External Scanner Integration API
+
+  app.post("/api/external-scanner/trigger", async (req, res) => {
+    try {
+      const { repositoryId, scanId, repoUrl, branch, integrationId } = req.body;
+      
+      if (!repositoryId || !scanId || !repoUrl || !integrationId) {
+        return res.status(400).json({ 
+          error: "Missing required fields: repositoryId, scanId, repoUrl, integrationId" 
+        });
+      }
+
+      const result = await externalScannerService.triggerExternalScan(
+        repositoryId, 
+        scanId, 
+        repoUrl, 
+        branch || 'main',
+        integrationId
+      );
+
+      if (result.success) {
+        res.json({
+          success: true,
+          message: "External scan triggered successfully",
+          externalScanId: result.externalScanId
+        });
+      } else {
+        res.status(400).json({
+          error: result.error || "Failed to trigger external scan"
+        });
+      }
+    } catch (error) {
+      console.error("Trigger external scan error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Internal server error" 
+      });
+    }
+  });
+
+  app.post("/api/external-scanner/test/:integrationId", async (req, res) => {
+    try {
+      const { integrationId } = req.params;
+      
+      if (!integrationId) {
+        return res.status(400).json({ error: "Integration ID is required" });
+      }
+
+      const result = await externalScannerService.testExternalScannerIntegration(integrationId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Test external scanner integration error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Internal server error" 
+      });
+    }
+  });
+
+  app.get("/api/external-scanner/integrations", async (req, res) => {
+    try {
+      const integrations = await externalScannerService.getExternalScannerIntegrations();
+      res.json(integrations);
+    } catch (error) {
+      console.error("Get external scanner integrations error:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Internal server error" 
       });
     }
   });
