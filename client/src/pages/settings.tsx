@@ -524,6 +524,18 @@ export default function Settings() {
 
           <Card>
             <CardHeader>
+              <CardTitle>External Scanner Integrations</CardTitle>
+              <CardDescription>
+                Connect to external scanning services for additional vulnerability detection capabilities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExternalScannerIntegrations />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Default Scanner Settings</CardTitle>
               <CardDescription>
                 Configure the built-in semgrep scanner for post-quantum cryptography detection
