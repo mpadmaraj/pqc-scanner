@@ -71,9 +71,9 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center space-x-2">
               <img src="/logo.png" alt="Q-Scan" className="h-8 w-8" />
               <h1 className="text-2xl font-medium text-foreground">Q-Scan</h1>
-              <span className="rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
+              {/* <span className="rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
                 BETA
-              </span>
+              </span> */}
             </div>
           </div>
 
@@ -86,12 +86,12 @@ export default function Layout({ children }: LayoutProps) {
                 <Settings className="h-5 w-5" />
               </Button>
             </Link>
-            <div className="flex items-center space-x-2">
+            {/* <div className="flex items-center space-x-2">
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                 <span className="text-sm font-medium">D</span>
               </div>
               <span className="text-sm font-medium hidden sm:inline" data-testid="text-username">Developer</span>
-            </div>
+            </div> */}
           </div>
         </div>
       </header>

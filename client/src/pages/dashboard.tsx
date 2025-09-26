@@ -266,13 +266,24 @@ export default function Dashboard() {
                         outerRadius={80}
                         paddingAngle={5}
                         dataKey="count"
+                        nameKey="language"
                       >
                         {languageStats.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6'][index % 5]} />
                         ))}
                       </RechartsPie>
-                      <Tooltip formatter={(value, name) => [`${value} repositories`, name]} />
-                      <Legend formatter={(value) => languageStats.find(item => item.count.toString() === value)?.language || value} />
+                      <Tooltip
+                        formatter={(value, name, props) => {
+                          // value is count, name is language
+                          return [`${value} repositories`, props.payload.language];
+                        }}
+                      />
+                      <Legend
+                        formatter={(value, entry) => {
+                          // value is the language
+                          return value;
+                        }}
+                      />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
